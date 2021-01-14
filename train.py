@@ -47,7 +47,7 @@ class Train:
     def train(self, arch, weight_path):
         """"""
         '''create loss'''
-        c_loss = CustomLoss(dataset_name=self.dataset_name, theta_0=0.2, theta_1=0.8, omega_bg=1, omega_fg2=5,
+        c_loss = CustomLoss(dataset_name=self.dataset_name, theta_0=0.3, theta_1=0.8, omega_bg=1, omega_fg2=5,
                             omega_fg1=50)
 
         '''create summary writer'''

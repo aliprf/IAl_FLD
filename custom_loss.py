@@ -48,6 +48,8 @@ class CustomLoss:
         # weight_map[np.where(np.logical_and(hm_gt >= self.theta_0, hm_gt < self.theta_1))] = self.omega_fg2
         # weight_map[hm_gt >= self.theta_1] = self.omega_fg1
 
+        hm_gt = tf.where(hm_gt < 0.1, 0.0, 1.0) * hm_gt # get rid of values that are smaller than 0.1
+
         weight_map_bg = tf.cast(hm_gt < self.theta_0, dtype=tf.float32) * self.omega_bg
         weight_map_fg2 = tf.cast(tf.logical_and(hm_gt >= self.theta_0, hm_gt < self.theta_1),
                                  dtype=tf.float32) * self.omega_fg2
@@ -57,16 +59,15 @@ class CustomLoss:
         loss_fg2 = 0
         loss_fg1 = 0
         for i, hm_pr in enumerate(hm_prs):
-            hm_pr = np.array(hm_pr)  # convert tf to np
-            loss_bg += ((i + 1) ** 2) * 0.5 * tf.math.reduce_mean(
-                tf.math.multiply(weight_map_bg, tf.math.square(hm_gt - hm_pr)))
+            # hm_pr = np.array(hm_pr)  # convert tf to np
+            loss_bg += ((i + 1) * 2) * 0.5 * tf.math.reduce_mean(
+                weight_map_bg * tf.math.square(hm_gt - hm_pr))
 
-            loss_fg2 += ((i + 1) ** 2) * tf.math.reduce_mean(
-                tf.math.multiply(weight_map_fg2, tf.math.abs(hm_gt - hm_pr)))
+            loss_fg2 += ((i + 1) * 2) * tf.math.reduce_mean(
+                weight_map_fg2 * tf.math.abs(hm_gt - hm_pr))
 
-            loss_fg1 += ((i + 1) ** 2) * 0.5 * tf.math.reduce_mean(
-                tf.math.multiply(weight_map_fg1,
-                                 tf.math.square(hm_gt - hm_pr)))
+            loss_fg1 += ((i + 1) * 2) * 0.5 * tf.math.reduce_mean(
+                weight_map_fg1 * tf.math.square(hm_gt - hm_pr))
 
         return loss_bg, loss_fg2, loss_fg1
 
