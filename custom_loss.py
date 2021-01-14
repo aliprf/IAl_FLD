@@ -28,20 +28,40 @@ class CustomLoss:
         self.omega_fg1 = omega_fg1
 
     def intensive_aware_loss(self, hm_gt, hm_prs, anno_gt, anno_prs):
-        loss_hm = self.hm_intensive_loss(hm_gt, hm_prs)
+        loss_bg, loss_fg2, loss_fg1 = self.hm_intensive_loss(hm_gt, hm_prs)
         loss_reg = self.regression_loss(anno_gt, anno_prs)
-        loss_total = loss_hm + loss_reg
-        return loss_total, loss_hm, loss_reg
+        loss_total = loss_bg + loss_fg2 + loss_fg1 + loss_reg
+        return loss_total, loss_bg, loss_fg2, loss_fg1, loss_reg
 
     def hm_intensive_loss(self, hm_gt, hm_prs):
         """return hm intensive loss"""
-        '''create weight map for each hm_layer'''
-        weight_map = tf.zeros_like(hm_gt)
+        '''create weight map for each hm_layer --hm : [batch, 56, 56, 68] '''
+        hm_gt = np.array(hm_gt)  # convert tf to np
+        '''create weigh-tmap'''
+        weight_map = np.zeros_like(hm_gt)
         weight_map[hm_gt < self.theta_0] = self.omega_bg
-        weight_map[np.where(np.logical_and(sample_hm >= self.theta_0, sample_hm < self.theta_1))] = self.omega_fg2
+        weight_map[np.where(np.logical_and(hm_gt >= self.theta_0, hm_gt < self.theta_1))] = self.omega_fg2
         weight_map[hm_gt >= self.theta_1] = self.omega_fg1
+        ''''''
+        loss_bg = 0
+        loss_fg2 = 0
+        loss_fg1 = 0
+        for i, hm_pr in enumerate(hm_prs):
+            hm_pr = np.array(hm_pr)  # convert tf to np
+            loss_bg += ((i + 1) ** 2) * 0.5 * tf.math.reduce_mean(
+                tf.math.multiply(weight_map[hm_gt < self.theta_0],
+                                 tf.math.square(hm_gt[hm_gt < self.theta_0] - hm_pr[hm_gt < self.theta_0])))
+            loss_fg2 += ((i + 1) ** 2) * tf.math.reduce_mean(
+                tf.math.multiply(weight_map[np.where(np.logical_and(hm_gt >= self.theta_0, hm_gt < self.theta_1))],
+                                 tf.math.abs(
+                                     hm_gt[np.where(np.logical_and(hm_gt >= self.theta_0, hm_gt < self.theta_1))] -
+                                     hm_pr[np.where(np.logical_and(hm_gt >= self.theta_0, hm_gt < self.theta_1))])))
+            loss_fg1 += ((i + 1) ** 2) * 0.5 * tf.math.reduce_mean(
+                tf.math.multiply(weight_map[hm_gt >= self.theta_1],
+                                 tf.math.square(hm_gt[hm_gt >= self.theta_1] - hm_pr[hm_gt >= self.theta_1])))
+
+        return loss_bg, loss_fg2, loss_fg1
 
     def regression_loss(self, anno_gt, anno_prs):
         return 0
         # return tf.reduce_mean(tf.square(anno_gr - anno_pr))
-

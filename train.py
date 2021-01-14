@@ -48,7 +48,7 @@ class Train:
         """"""
         '''create loss'''
         c_loss = CustomLoss(dataset_name=self.dataset_name, theta_0=0.2, theta_1=0.8, omega_bg=1, omega_fg2=5,
-                            omega_fg1=20)
+                            omega_fg1=50)
 
         '''create summary writer'''
         summary_writer = tf.summary.create_file_writer(
@@ -61,7 +61,7 @@ class Train:
             model.load_weights(weight_path)
 
         '''LearningRate'''
-        _lr = 1e-3
+        _lr = 1e-2
         '''create optimizer'''
         optimizer = self._get_optimizer(lr=_lr)
 
@@ -113,25 +113,26 @@ class Train:
             # out_pnt_3 = self._convert_hm_to_pts(hm_prs[3])  # the last is the most important
 
             '''calculate loss'''
-            loss_total, loss_hm, loss_reg = c_loss.intensive_aware_loss(hm_gt=hm_gt,
-                                                                        hm_prs=hm_prs,
-                                                                        anno_gt=anno_gt,
-                                                                        anno_prs=None,
-                                                                        # anno_prs=[out_pnt_0, out_pnt_1,
-                                                                        #          out_pnt_2, out_pnt_3],
-
-                                                                        ds_name=self.dataset_name)
+            loss_total, loss_bg, loss_fg2, loss_fg1, loss_reg = c_loss.intensive_aware_loss(hm_gt=hm_gt,
+                                                                                            hm_prs=hm_prs,
+                                                                                            anno_gt=anno_gt,
+                                                                                            anno_prs=None,
+                                                                                            # anno_prs=[out_pnt_0, out_pnt_1,
+                                                                                            #          out_pnt_2, out_pnt_3],
+                                                                                            )
         '''calculate gradient'''
         gradients_of_model = tape.gradient(loss_total, model.trainable_variables)
         '''apply Gradients:'''
         optimizer.apply_gradients(zip(gradients_of_model, model.trainable_variables))
         '''printing loss Values: '''
         tf.print("->EPOCH: ", str(epoch), "->STEP: ", str(step) + '/' + str(total_steps), ' -> : LOSS: ', loss_total,
-                 ' -> : loss_hm: ', loss_hm, ' -> : loss_reg: ', loss_reg)
+                 ' -> : loss_fg1: ', loss_fg1, ' -> : loss_fg2: ', loss_fg2 ,' -> : loss_bg: ', loss_bg, ' -> : loss_reg: ', loss_reg)
         # print('==--==--==--==--==--==--==--==--==--')
         with summary_writer.as_default():
             tf.summary.scalar('LOSS', loss_total, step=epoch)
-            tf.summary.scalar('loss_hm', loss_hm, step=epoch)
+            tf.summary.scalar('loss_fg1', loss_fg1, step=epoch)
+            tf.summary.scalar('loss_fg2', loss_fg2, step=epoch)
+            tf.summary.scalar('loss_bg', loss_bg, step=epoch)
             tf.summary.scalar('loss_reg', loss_reg, step=epoch)
 
     def _calc_learning_rate(self, iterations, step_size, base_lr, max_lr, gamma=0.99994):
@@ -179,7 +180,7 @@ class Train:
                   batch_index * LearningConfig.batch_size:(batch_index + 1) * LearningConfig.batch_size]
         '''create img and annotations'''
         img_batch = np.array([imread(self.img_path + file_name) for file_name in batch_x]) / 255.0
-        hm_batch = np.array([load(self.hm_path + file_name) for file_name in batch_x])
+        hm_batch = np.array([load(self.hm_path + file_name) for file_name in batch_y])
 
         '''in this method, we dont normalize the points'''
         pn_batch = np.array([load(self.annotation_path + file_name) for file_name in batch_y])
