@@ -121,6 +121,9 @@ class Train:
             #                                                                                 #          out_pnt_2, out_pnt_3],
             #                                                                                 )
             loss_total = tf.math.reduce_mean(tf.math.abs(hm_gt - hm_prs[0]))
+            loss_total += tf.math.reduce_mean(tf.math.abs(hm_gt - hm_prs[1]))
+            loss_total += tf.math.reduce_mean(tf.math.abs(hm_gt - hm_prs[2]))
+            loss_total += tf.math.reduce_mean(tf.math.abs(hm_gt - hm_prs[3]))
 
         '''calculate gradient'''
         gradients_of_model = tape.gradient(loss_total, model.trainable_variables)
