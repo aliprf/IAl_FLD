@@ -35,7 +35,9 @@ class CustomLoss:
         # return loss_total, loss_bg, loss_fg2, loss_fg1, loss_reg
 
     def hm_intensive_loss(self, hm_gt, hm_prs):
-        return tf.math.square(hm_gt - hm_prs[0]), tf.math.square(hm_gt - hm_prs[1]), tf.math.square(hm_gt - hm_prs[2]) + tf.math.square(hm_gt - hm_prs[3])
+        return tf.reduce_mean(tf.math.square(hm_gt - hm_prs[0])),\
+               tf.reduce_mean(tf.math.square(hm_gt - hm_prs[1])),\
+               tf.reduce_mean(tf.math.square(hm_gt - hm_prs[2]) )+ tf.reduce_mean(tf.math.square(hm_gt - hm_prs[3]))
 
         """return hm intensive loss"""
         '''create weight map for each hm_layer --hm : [batch, 56, 56, 68] '''
