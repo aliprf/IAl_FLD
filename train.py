@@ -114,30 +114,27 @@ class Train:
 
             '''calculate loss'''
             # loss_total, loss_bg, loss_fg2, loss_fg1, loss_reg = c_loss.intensive_aware_loss(hm_gt=hm_gt,
-            #                                                                                 hm_prs=hm_prs,
-            #                                                                                 anno_gt=anno_gt,
-            #                                                                                 anno_prs=None,
-            #                                                                                 # anno_prs=[out_pnt_0, out_pnt_1,
-            #                                                                                 #          out_pnt_2, out_pnt_3],
-            #                                                                                 )
-            loss_total = tf.math.reduce_mean(tf.math.abs(hm_gt - hm_prs[0]))
-            loss_total += tf.math.reduce_mean(tf.math.abs(hm_gt - hm_prs[1]))
-            loss_total += tf.math.reduce_mean(tf.math.abs(hm_gt - hm_prs[2]))
-            loss_total += tf.math.reduce_mean(tf.math.abs(hm_gt - hm_prs[3]))
-
+            loss_total, loss_bg, loss_fg2, loss_fg1 = c_loss.intensive_aware_loss(hm_gt=hm_gt,
+                                                                                  hm_prs=hm_prs,
+                                                                                  anno_gt=anno_gt,
+                                                                                  anno_prs=None,
+                                                                                  # anno_prs=[out_pnt_0, out_pnt_1,
+                                                                                  #          out_pnt_2, out_pnt_3],
+                                                                                  )
         '''calculate gradient'''
         gradients_of_model = tape.gradient(loss_total, model.trainable_variables)
         '''apply Gradients:'''
         optimizer.apply_gradients(zip(gradients_of_model, model.trainable_variables))
         '''printing loss Values: '''
-        tf.print("->EPOCH: ", str(epoch), "->STEP: ", str(step) + '/' + str(total_steps), ' -> : LOSS: ', loss_total)
-                 # ' -> : loss_fg1: ', loss_fg1, ' -> : loss_fg2: ', loss_fg2 ,' -> : loss_bg: ', loss_bg, ' -> : loss_reg: ', loss_reg)
+        tf.print("->EPOCH: ", str(epoch), "->STEP: ", str(step) + '/' + str(total_steps), ' -> : LOSS: ', loss_total,
+                 ' -> : loss_fg1: ', loss_fg1, ' -> : loss_fg2: ', loss_fg2, ' -> : loss_bg: ',
+                 loss_bg)  # , ' -> : loss_reg: ', loss_reg)
         # print('==--==--==--==--==--==--==--==--==--')
         with summary_writer.as_default():
             tf.summary.scalar('LOSS', loss_total, step=epoch)
-            # tf.summary.scalar('loss_fg1', loss_fg1, step=epoch)
-            # tf.summary.scalar('loss_fg2', loss_fg2, step=epoch)
-            # tf.summary.scalar('loss_bg', loss_bg, step=epoch)
+            tf.summary.scalar('loss_fg1', loss_fg1, step=epoch)
+            tf.summary.scalar('loss_fg2', loss_fg2, step=epoch)
+            tf.summary.scalar('loss_bg', loss_bg, step=epoch)
             # tf.summary.scalar('loss_reg', loss_reg, step=epoch)
 
     def _calc_learning_rate(self, iterations, step_size, base_lr, max_lr, gamma=0.99994):

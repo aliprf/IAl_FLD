@@ -29,12 +29,13 @@ class CustomLoss:
 
     def intensive_aware_loss(self, hm_gt, hm_prs, anno_gt, anno_prs):
         loss_bg, loss_fg2, loss_fg1 = self.hm_intensive_loss(hm_gt, hm_prs)
-        loss_reg = self.regression_loss(anno_gt, anno_prs)
+        # loss_reg = self.regression_loss(anno_gt, anno_prs)
         loss_total = loss_bg + loss_fg2 + loss_fg1
-        return loss_total, loss_bg, loss_fg2, loss_fg1, loss_reg
+        return loss_total, loss_bg, loss_fg2, loss_fg1
+        # return loss_total, loss_bg, loss_fg2, loss_fg1, loss_reg
 
     def hm_intensive_loss(self, hm_gt, hm_prs):
-        return tf.math.square(hm_gt, hm_prs[0]), tf.math.square(hm_gt, hm_prs[0]), tf.math.square(hm_gt, hm_prs[0])
+        return tf.math.square(hm_gt, hm_prs[0]), tf.math.square(hm_gt, hm_prs[1]), tf.math.square(hm_gt, hm_prs[2]) + tf.math.square(hm_gt, hm_prs[3])
 
         """return hm intensive loss"""
         '''create weight map for each hm_layer --hm : [batch, 56, 56, 68] '''
