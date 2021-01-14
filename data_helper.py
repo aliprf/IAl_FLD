@@ -1,0 +1,171 @@
+from configuration import InputDataSize
+import os
+import numpy as np
+from numpy import save, load
+import matplotlib.pyplot as plt
+from matplotlib.ticker import (AutoMinorLocator, MultipleLocator)
+from matplotlib import cm
+from matplotlib.ticker import LinearLocator, FormatStrFormatter
+from matplotlib import  colors
+from numpy import log as ln
+import math
+
+class DataHelper:
+    def create_image_and_labels_name(self, img_path, hm_path):
+        img_filenames = []
+        lbls_filenames = []
+
+        for file in os.listdir(img_path):
+            if file.endswith(".jpg") or file.endswith(".png"):
+                lbl_file = str(file)[:-3] + "npy"  # just name
+                if os.path.exists(hm_path + lbl_file):
+                    img_filenames.append(str(file))
+                    lbls_filenames.append(lbl_file)
+
+        return np.array(img_filenames), np.array(lbls_filenames)
+
+    def load_and_normalize(self, point_path):
+        annotation = load(point_path)
+
+        width = InputDataSize.image_input_size
+        height = InputDataSize.image_input_size
+        x_center = width / 2
+        y_center = height / 2
+        annotation_norm = []
+        for p in range(0, len(annotation), 2):
+            annotation_norm.append((x_center - annotation[p]) / width)
+            annotation_norm.append((y_center - annotation[p + 1]) / height)
+        return annotation_norm
+
+    def depict_loss(self, theta_0, theta_1):
+        """we create the loss using the loss and |y-y`|"""
+        dela_intensity_values = np.linspace(-2.0, 2.0, 1000)
+
+        loss_val_bg = np.zeros_like(dela_intensity_values)
+        der_loss_val_bg = np.zeros_like(dela_intensity_values)
+        loss_val_fg_2 = np.zeros_like(dela_intensity_values)
+        der_loss_val_fg_2 = np.zeros_like(dela_intensity_values)
+        loss_val_fg_1 = np.zeros_like(dela_intensity_values)
+        der_loss_val_fg_1 = np.zeros_like(dela_intensity_values)
+
+        for i in range(len(dela_intensity_values)):
+            if -1.0 <= dela_intensity_values[i] <= 1.0:
+                '''bf loss:'''
+                loss_val_bg[i] = 0.5 * dela_intensity_values[i]**2   # y = 0.5 x^2
+                der_loss_val_bg[i] = abs(dela_intensity_values[i])          # y` = x
+                '''fg_2'''
+                loss_val_fg_2[i] = abs(dela_intensity_values[i])  # y = x
+                der_loss_val_fg_2[i] = 1  # y` = 1
+                '''fg_1'''
+                loss_val_fg_1[i] = 10 * ln(abs(dela_intensity_values[i])+1) # y = 10 ln(|x|+1)
+                der_loss_val_fg_1[i] = 10/(abs(dela_intensity_values[i])+1) # y` = 10/(|x|+1)
+
+            else:
+                '''bf loss:'''
+                loss_val_bg[i] = 0.5 * abs(dela_intensity_values[i])
+                der_loss_val_bg[i] = 0.5
+                '''fg_2'''
+                loss_val_fg_2[i] = abs(dela_intensity_values[i])  # y = x
+                der_loss_val_fg_2[i] = 1  # y` = 1
+                '''fg_1'''
+                loss_val_fg_1[i] = 2 * abs(dela_intensity_values[i]) - 1 + 10 * ln(2)  # y = 2(|x|-2)+ln(2)
+                der_loss_val_fg_1[i] = 2  # y` = 2
+
+        '''print loss values:'''
+        dpi = 80
+        width = 3*500
+        height = 2*500
+        figsize = width / float(dpi), height / float(dpi)
+        fig, axs = plt.subplots(nrows=2, ncols=3, constrained_layout=True, figsize=figsize,
+                                gridspec_kw={'width_ratios': [1, 1, 1]})
+
+        for i in range(2):
+            for j in range(3):
+                axs[i,j].set_xlim(-1.5, 1.5)
+                axs[i,j].set_ylim(-0.5, 2.5)
+                axs[i,j].xaxis.set_minor_locator(AutoMinorLocator(4))
+                axs[i,j].yaxis.set_minor_locator(AutoMinorLocator(4))
+                axs[i,j].grid(which='major', color='#968c83', linestyle='--', linewidth=0.4)
+                axs[i,j].grid(which='minor', color='#9ba4b4', linestyle=':', linewidth=0.3)
+                # axs[i,j].text(-0.2, -0.2, r'|y-y`|')
+
+        axs[0, 2].set_xlim(-1.5, 1.5)
+        axs[0, 2].set_ylim(-0.2, 10.2)
+
+        axs[1, 2].set_xlim(-1.5, 1.5)
+        axs[1, 2].set_ylim(-0.2, 10.2)
+
+        fig_bg_loss, = axs[0, 0].plot(dela_intensity_values[:], loss_val_bg[:], '#09015f', linewidth=4.0,
+                                      label='bg Region Loss', alpha=1.0)
+        fig_d_bg_loss, = axs[1, 0].plot(dela_intensity_values[:], der_loss_val_bg[:], '#55b3b1', linewidth=3.0,
+                                        label='Derivative of bg Region Loss', alpha=1.0)
+
+        fig_fg2_loss, = axs[0, 1].plot(dela_intensity_values[:], loss_val_fg_2[:], '#f58634', linewidth=4.0,
+                                       label='fg-2 Region Loss', alpha=1.0)
+        fig_d_fg2_loss, = axs[1, 1].plot(dela_intensity_values[:], der_loss_val_fg_2[:], '#ffcc29', linewidth=3.0,
+                                         label='Derivative of fg-2 Region Loss', alpha=1.0)
+
+        fig_fg1_loss, = axs[0, 2].plot(dela_intensity_values[:], loss_val_fg_1[:], '#184d47', linewidth=4.0,
+                                       label='fg-1 Region Loss', alpha=1.0)
+        fig_d_fg1_loss, = axs[1, 2].plot(dela_intensity_values[:], der_loss_val_fg_1[:], '#c0e218', linewidth=3.0,
+                                         label='Derivative of fg-1 Region Loss', alpha=1.0)
+        plt.tight_layout()
+        plt.savefig('loss.png', bbox_inches='tight')
+
+
+    def depict_weight_map_function(self, theta_0, theta_1):
+        """create both loss and weightmap"""
+        '''create sample heatmap'''
+        sample_hm = self._create_single_hm(width=56, height=56, x0=23, y0=23, sigma=7)
+        '''create weight'''
+        weight_map = np.zeros_like(sample_hm)
+        weight_map[sample_hm < theta_0] = 1
+        weight_map[np.where(np.logical_and(sample_hm >= theta_0, sample_hm < theta_1))] = 5
+        weight_map[sample_hm >= theta_1] = 15
+
+        '''depict weight'''
+        dpi = 80
+        width = 1400
+        height = 1400
+        figsize = width / float(dpi), height / float(dpi)
+        fig_1 = plt.figure(figsize=figsize)
+        ax = fig_1.gca(projection='3d')
+        x = np.linspace(0, 56, 56)
+        y = np.linspace(0, 56, 56)
+        X, Y = np.meshgrid(x, y)
+
+        cmap = colors.ListedColormap(['#9088d4', '#cbbcb1', '#16697a', '#cbbcb1', '#a20a0a'])
+        boundaries = [0, 1.01, 5, 5.1, 14.99, 15]
+        norm = colors.BoundaryNorm(boundaries, cmap.N, clip=False)
+
+        surf = ax.plot_surface(X, Y, weight_map, alpha=0.8, linewidth=1.5, antialiased=True, zorder=0.1,
+                               vmin=0, vmax=15, rstride=1, cstride=1, cmap=cmap, norm=norm)
+                               # cmap=cm.coolwarm)
+        ax.set_zlim(-1.0, 15.1)
+        ax.grid(True)
+        ax.zaxis.set_major_locator(LinearLocator(15))
+        ax.zaxis.set_major_formatter(FormatStrFormatter('%.1f'))
+        fig_1.colorbar(surf, shrink=0.2, aspect=15)
+        plt.savefig('./weight_map_.png', bbox_inches='tight')
+
+        # for i in range(len(sample_hm.shape[0])):
+        #     for j in range(len(sample_hm.shape[1])):
+        #         intensity_xy = sample_hm[i, j]
+        #         if 0 <= intensity_xy < theta_0:
+        #             # bg:
+        #
+        #         elif theta_0 <= intensity_xy < theta_1:
+        #             # fg_2:
+        #
+        #         elif theta_0 <= intensity_xy =< 1:
+        #             #fg_1:
+
+        '''depict loss:'''
+
+
+    def _create_single_hm(self, width, height, x0, y0, sigma):
+        x = np.arange(0, width, 1, float)
+        y = np.arange(0, height, 1, float)[:, np.newaxis]
+        gaus = np.exp(-((x - x0) ** 2 + (y - y0) ** 2) / (2 * sigma ** 2))
+        gaus[gaus <= 0.01] = 0
+        return gaus
