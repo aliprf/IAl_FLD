@@ -35,18 +35,22 @@ class CustomLoss:
         # return loss_total, loss_bg, loss_fg2, loss_fg1, loss_reg
 
     def hm_intensive_loss(self, hm_gt, hm_prs):
-        return tf.reduce_mean(tf.math.square(hm_gt - hm_prs[0])),\
-               tf.reduce_mean(tf.math.square(hm_gt - hm_prs[1])),\
-               tf.reduce_mean(tf.math.square(hm_gt - hm_prs[2]) )+ tf.reduce_mean(tf.math.square(hm_gt - hm_prs[3]))
+        # return tf.reduce_mean(tf.math.square(hm_gt - hm_prs[0])),\
+        #        tf.reduce_mean(tf.math.square(hm_gt - hm_prs[1])),\
+        #        tf.reduce_mean(tf.math.square(hm_gt - hm_prs[2]) )+ tf.reduce_mean(tf.math.square(hm_gt - hm_prs[3]))
 
         """return hm intensive loss"""
         '''create weight map for each hm_layer --hm : [batch, 56, 56, 68] '''
-        # hm_gt = np.array(hm_gt)  # convert tf to np
+        hm_gt = np.array(hm_gt)  # convert tf to np
         '''create weigh-tmap'''
-        # weight_map = np.zeros_like(hm_gt)
-        weight_map_bg = tf.cast(hm_gt < self.theta_0, dtype=tf.float32) * self.omega_bg
+        weight_map = np.zeros_like(hm_gt)
+        weight_map[hm_gt < self.theta_0] = self.omega_bg
+        weight_map[np.where(np.logical_and(hm_gt >= self.theta_0, hm_gt < self.theta_1))] = self.omega_fg2
+        weight_map[hm_gt >= self.theta_1] = self.omega_fg1
+
+        # weight_map_bg = tf.cast(hm_gt < self.theta_0, dtype=tf.float32) * self.omega_bg
         # weight_map[np.where(np.logical_and(hm_gt >= self.theta_0, hm_gt < self.theta_1))] = self.omega_fg2
-        weight_map_fg = tf.cast(hm_gt >= self.theta_1, dtype=tf.float32) * self.omega_fg1
+        # weight_map_fg = tf.cast(hm_gt >= self.theta_1, dtype=tf.float32) * self.omega_fg1
         # ''''''
         loss_bg = 0
         loss_fg2 = 0
