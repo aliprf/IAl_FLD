@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import math
 from scipy.spatial import distance
 from numpy import load, save
+from numpy import log as ln
 
 
 class CustomLoss:
@@ -48,7 +49,7 @@ class CustomLoss:
         # weight_map[np.where(np.logical_and(hm_gt >= self.theta_0, hm_gt < self.theta_1))] = self.omega_fg2
         # weight_map[hm_gt >= self.theta_1] = self.omega_fg1
 
-        hm_gt = tf.where(hm_gt < 0.1, 0.0, 1.0) * hm_gt # get rid of values that are smaller than 0.1
+        hm_gt = tf.where(hm_gt < 0.1, 0.0, 1.0) * hm_gt  # get rid of values that are smaller than 0.1
 
         weight_map_bg = tf.cast(hm_gt < self.theta_0, dtype=tf.float32) * self.omega_bg
         weight_map_fg2 = tf.cast(tf.logical_and(hm_gt >= self.theta_0, hm_gt < self.theta_1),
@@ -59,15 +60,29 @@ class CustomLoss:
         loss_fg2 = 0
         loss_fg1 = 0
         for i, hm_pr in enumerate(hm_prs):
-            # hm_pr = np.array(hm_pr)  # convert tf to np
-            loss_bg += ((i + 1) * 2) * 0.5 * tf.math.reduce_mean(
-                weight_map_bg * tf.math.square(hm_gt - hm_pr))
+            delta_intensity = tf.math.abs(hm_gt - hm_pr)
+            '''create high and low dif map'''
+            high_dif_map = tf.where(delta_intensity >= 1.0, 1.0, 0.0)
+            low_dif_map = tf.where(delta_intensity < 1.0, 1.0, 0.0)
 
-            loss_fg2 += ((i + 1) * 2) * tf.math.reduce_mean(
-                weight_map_fg2 * tf.math.abs(hm_gt - hm_pr))
+            '''loss bg:'''
+            loss_bg_low_dif = ((i + 1) * 2) * tf.math.reduce_mean(
+                weight_map_bg * low_dif_map * 0.5 * tf.math.square(hm_gt - hm_pr))
+            loss_bg_high_dif = ((i + 1) * 2) * tf.math.reduce_mean(
+                weight_map_bg * high_dif_map * 0.5 * tf.math.abs(hm_gt - hm_pr))
+            loss_bg += (loss_bg_low_dif + loss_bg_high_dif)
 
-            loss_fg1 += ((i + 1) * 2) * 0.5 * tf.math.reduce_mean(
-                weight_map_fg1 * tf.math.square(hm_gt - hm_pr))
+            '''loss fg2'''
+            loss_fg2 += ((i + 1) * 2) * tf.math.reduce_mean(weight_map_fg2 * tf.math.abs(hm_gt - hm_pr))
+
+            '''loss fg1'''
+            loss_fg1_high_dif = ((i + 1) * 2) * tf.math.reduce_mean(weight_map_fg1 * high_dif_map *
+                                                                    (2 * (tf.math.abs(hm_gt - hm_pr) - 1) +
+                                                                     LearningConfig.Loss_fg_k * ln(2)))
+            loss_fg1_low_dif = ((i + 1) * 2) * tf.math.reduce_mean(
+                weight_map_fg1 * low_dif_map * (
+                            LearningConfig.Loss_fg_k * tf.math.log(tf.math.abs(hm_gt - hm_pr) + 1)))
+            loss_fg1 = loss_fg1_high_dif + loss_fg1_low_dif
 
         return loss_bg, loss_fg2, loss_fg1
 

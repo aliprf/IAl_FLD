@@ -68,7 +68,7 @@ class DataHelper:
                 loss_val_fg_2[i] = abs(dela_intensity_values[i])  # y = x
                 der_loss_val_fg_2[i] = 1  # y` = 1
                 '''fg_1'''
-                loss_val_fg_1[i] = 2 * abs(dela_intensity_values[i]) - 1 + 10 * ln(2)  # y = 2(|x|-2)+ln(2)
+                loss_val_fg_1[i] = 2 * (abs(dela_intensity_values[i]) - 1) + 10 * ln(2)  # y = 2(|x|-2)+ln(2)
                 der_loss_val_fg_1[i] = 2  # y` = 2
 
         '''print loss values:'''
