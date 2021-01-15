@@ -31,7 +31,7 @@ class CustomLoss:
     def intensive_aware_loss(self, hm_gt, hm_prs, anno_gt, anno_prs):
         loss_bg, loss_fg2, loss_fg1 = self.hm_intensive_loss(hm_gt, hm_prs)
         # loss_reg = self.regression_loss(anno_gt, anno_prs)
-        loss_total = loss_bg + 5*loss_fg2 + 10*loss_fg1
+        loss_total = loss_bg + loss_fg2 + loss_fg1
         return loss_total, loss_bg, loss_fg2, loss_fg1
         # return loss_total, loss_bg, loss_fg2, loss_fg1, loss_reg
 

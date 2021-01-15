@@ -39,7 +39,7 @@ class DataHelper:
 
     def depict_loss(self, theta_0, theta_1):
         """we create the loss using the loss and |y-y`|"""
-        dela_intensity_values = np.linspace(-2.0, 2.0, 1000)
+        dela_intensity_values = np.linspace(-3.0, 3.0, 1000)
 
         loss_val_bg = np.zeros_like(dela_intensity_values)
         der_loss_val_bg = np.zeros_like(dela_intensity_values)
@@ -48,45 +48,46 @@ class DataHelper:
         loss_val_fg_1 = np.zeros_like(dela_intensity_values)
         der_loss_val_fg_1 = np.zeros_like(dela_intensity_values)
 
+        threshol = 0.5
         for i in range(len(dela_intensity_values)):
-            if -1.0 <= dela_intensity_values[i] <= 1.0:
+            if -threshol <= dela_intensity_values[i] <= threshol:
                 '''bf loss:'''
                 loss_val_bg[i] = 0.5 * dela_intensity_values[i]**2   # y = 0.5 x^2
                 der_loss_val_bg[i] = abs(dela_intensity_values[i])          # y` = x
                 '''fg_2'''
-                loss_val_fg_2[i] = abs(dela_intensity_values[i])  # y = x
-                der_loss_val_fg_2[i] = 1  # y` = 1
+                loss_val_fg_2[i] = 2*np.square(dela_intensity_values[i])  # y = 2x^2
+                der_loss_val_fg_2[i] = 4 * abs(dela_intensity_values[i])  # y` = 4x
                 '''fg_1'''
                 loss_val_fg_1[i] = 10 * ln(abs(dela_intensity_values[i])+1) # y = 10 ln(|x|+1)
                 der_loss_val_fg_1[i] = 10/(abs(dela_intensity_values[i])+1) # y` = 10/(|x|+1)
 
             else:
                 '''bf loss:'''
-                loss_val_bg[i] = 0.5 * abs(dela_intensity_values[i])
-                der_loss_val_bg[i] = 0.5
+                loss_val_bg[i] = np.square(dela_intensity_values[i]) - 0.5 * threshol**2 # y = x^2
+                der_loss_val_bg[i] = 2 * abs(dela_intensity_values[i])  # y` = 2x
                 '''fg_2'''
-                loss_val_fg_2[i] = abs(dela_intensity_values[i])  # y = x
-                der_loss_val_fg_2[i] = 1  # y` = 1
+                loss_val_fg_2[i] = np.square(dela_intensity_values[i]) + threshol**2 # y = x^2
+                der_loss_val_fg_2[i] = 2 * abs(dela_intensity_values[i])  # y` = 2x  # y` = 1
                 '''fg_1'''
-                loss_val_fg_1[i] = 2 * (abs(dela_intensity_values[i]) - 1) + 10 * ln(2)  # y = 2(|x|-2)+ln(2)
-                der_loss_val_fg_1[i] = 2  # y` = 2
+                loss_val_fg_1[i] = np.square(dela_intensity_values[i]) + 10 * ln(1+threshol) - threshol**2  # y = x^2+ln(2)
+                der_loss_val_fg_1[i] = 2 * abs(dela_intensity_values[i]) # y` = 2x
 
         '''print loss values:'''
-        dpi = 80
-        width = 3*500
-        height = 2*500
+        dpi = 90
+        width = 3*700
+        height = 2*700
         figsize = width / float(dpi), height / float(dpi)
         fig, axs = plt.subplots(nrows=2, ncols=3, constrained_layout=True, figsize=figsize,
                                 gridspec_kw={'width_ratios': [1, 1, 1]})
 
         for i in range(2):
             for j in range(3):
-                axs[i,j].set_xlim(-1.5, 1.5)
-                axs[i,j].set_ylim(-0.5, 2.5)
+                axs[i,j].set_xlim(-2.5, 2.5)
+                axs[i,j].set_ylim(-0.5, 4.5)
                 axs[i,j].xaxis.set_minor_locator(AutoMinorLocator(4))
                 axs[i,j].yaxis.set_minor_locator(AutoMinorLocator(4))
-                axs[i,j].grid(which='major', color='#968c83', linestyle='--', linewidth=0.4)
-                axs[i,j].grid(which='minor', color='#9ba4b4', linestyle=':', linewidth=0.3)
+                axs[i,j].grid(which='major', color='#968c83', linestyle='--', linewidth=0.7)
+                axs[i,j].grid(which='minor', color='#9ba4b4', linestyle=':', linewidth=0.5)
                 # axs[i,j].text(-0.2, -0.2, r'|y-y`|')
 
         axs[0, 2].set_xlim(-1.5, 1.5)
@@ -97,17 +98,17 @@ class DataHelper:
 
         fig_bg_loss, = axs[0, 0].plot(dela_intensity_values[:], loss_val_bg[:], '#09015f', linewidth=4.0,
                                       label='bg Region Loss', alpha=1.0)
-        fig_d_bg_loss, = axs[1, 0].plot(dela_intensity_values[:], der_loss_val_bg[:], '#55b3b1', linewidth=3.0,
+        fig_d_bg_loss, = axs[1, 0].plot(dela_intensity_values[:], der_loss_val_bg[:], '#654062', linewidth=3.0,
                                         label='Derivative of bg Region Loss', alpha=1.0)
 
-        fig_fg2_loss, = axs[0, 1].plot(dela_intensity_values[:], loss_val_fg_2[:], '#f58634', linewidth=4.0,
+        fig_fg2_loss, = axs[0, 1].plot(dela_intensity_values[:], loss_val_fg_2[:], '#ff577f', linewidth=4.0,
                                        label='fg-2 Region Loss', alpha=1.0)
-        fig_d_fg2_loss, = axs[1, 1].plot(dela_intensity_values[:], der_loss_val_fg_2[:], '#ffcc29', linewidth=3.0,
+        fig_d_fg2_loss, = axs[1, 1].plot(dela_intensity_values[:], der_loss_val_fg_2[:], '#ff884b', linewidth=3.0,
                                          label='Derivative of fg-2 Region Loss', alpha=1.0)
 
-        fig_fg1_loss, = axs[0, 2].plot(dela_intensity_values[:], loss_val_fg_1[:], '#184d47', linewidth=4.0,
+        fig_fg1_loss, = axs[0, 2].plot(dela_intensity_values[:], loss_val_fg_1[:], '#295939', linewidth=4.0,
                                        label='fg-1 Region Loss', alpha=1.0)
-        fig_d_fg1_loss, = axs[1, 2].plot(dela_intensity_values[:], der_loss_val_fg_1[:], '#c0e218', linewidth=3.0,
+        fig_d_fg1_loss, = axs[1, 2].plot(dela_intensity_values[:], der_loss_val_fg_1[:], '#83a95c', linewidth=3.0,
                                          label='Derivative of fg-1 Region Loss', alpha=1.0)
         plt.tight_layout()
         plt.savefig('loss.png', bbox_inches='tight')
