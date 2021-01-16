@@ -38,7 +38,7 @@ class Train:
             if use_augmented:
                 self.img_path = WflwConf.augmented_train_image
                 self.annotation_path = WflwConf.augmented_train_annotation
-                self.hm_path = WflwConf.no_aug_train_hm
+                self.hm_path = WflwConf.augmented_train_hm
             else:
                 self.img_path = WflwConf.no_aug_train_image
                 self.annotation_path = WflwConf.no_aug_train_annotation
