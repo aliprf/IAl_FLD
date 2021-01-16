@@ -12,6 +12,7 @@ class DatasetType:
 
 class LearningConfig:
     Loss_fg_k = 10
+    Loss_threshold = 0.5
 
     CLR_METHOD = "triangular"
     MIN_LR = 1e-7

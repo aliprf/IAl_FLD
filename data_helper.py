@@ -6,9 +6,10 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import (AutoMinorLocator, MultipleLocator)
 from matplotlib import cm
 from matplotlib.ticker import LinearLocator, FormatStrFormatter
-from matplotlib import  colors
+from matplotlib import colors
 from numpy import log as ln
 import math
+
 
 class DataHelper:
     def create_image_and_labels_name(self, img_path, hm_path):
@@ -52,48 +53,48 @@ class DataHelper:
         for i in range(len(dela_intensity_values)):
             if -threshol <= dela_intensity_values[i] <= threshol:
                 '''bf loss:'''
-                loss_val_bg[i] = 0.5 * dela_intensity_values[i]**2   # y = 0.5 x^2
-                der_loss_val_bg[i] = abs(dela_intensity_values[i])          # y` = x
+                loss_val_bg[i] = 0.5 * dela_intensity_values[i] ** 2  # y = 0.5 x^2
+                der_loss_val_bg[i] = abs(dela_intensity_values[i])  # y` = x
                 '''fg_2'''
-                loss_val_fg_2[i] = 2*np.square(dela_intensity_values[i])  # y = 2x^2
-                der_loss_val_fg_2[i] = 4 * abs(dela_intensity_values[i])  # y` = 4x
+                loss_val_fg_2[i] = np.abs(dela_intensity_values[i])  # y = x
+                der_loss_val_fg_2[i] = 1  # * abs(dela_intensity_values[i])  # y` = 4x
                 '''fg_1'''
-                loss_val_fg_1[i] = 10 * ln(abs(dela_intensity_values[i])+1) # y = 10 ln(|x|+1)
-                der_loss_val_fg_1[i] = 10/(abs(dela_intensity_values[i])+1) # y` = 10/(|x|+1)
+                loss_val_fg_1[i] = 10 * ln(abs(dela_intensity_values[i]) + 1)  # y = 10 ln(|x|+1)
+                der_loss_val_fg_1[i] = 10 / (abs(dela_intensity_values[i]) + 1)  # y` = 10/(|x|+1)
 
             else:
                 '''bf loss:'''
-                loss_val_bg[i] = np.square(dela_intensity_values[i]) - 0.5 * threshol**2 # y = x^2
+                loss_val_bg[i] = np.square(dela_intensity_values[i]) - 0.5 * threshol ** 2  # y = x^2
                 der_loss_val_bg[i] = 2 * abs(dela_intensity_values[i])  # y` = 2x
                 '''fg_2'''
-                loss_val_fg_2[i] = np.square(dela_intensity_values[i]) + threshol**2 # y = x^2
+                loss_val_fg_2[i] = np.square(dela_intensity_values[i])+threshol**2    # y = x^2
                 der_loss_val_fg_2[i] = 2 * abs(dela_intensity_values[i])  # y` = 2x  # y` = 1
                 '''fg_1'''
-                loss_val_fg_1[i] = np.square(dela_intensity_values[i]) + 10 * ln(1+threshol) - threshol**2  # y = x^2+ln(2)
-                der_loss_val_fg_1[i] = 2 * abs(dela_intensity_values[i]) # y` = 2x
+                loss_val_fg_1[i] = np.square(dela_intensity_values[i]) + 10 * ln(1 + threshol) - threshol ** 2  # y = x^2+ln(2)
+                der_loss_val_fg_1[i] = 2 * abs(dela_intensity_values[i])  # y` = 2x
 
         '''print loss values:'''
-        dpi = 90
-        width = 3*700
-        height = 2*700
+        dpi = 80
+        width = 3 * 700
+        height = 2 * 700
         figsize = width / float(dpi), height / float(dpi)
         fig, axs = plt.subplots(nrows=2, ncols=3, constrained_layout=True, figsize=figsize,
                                 gridspec_kw={'width_ratios': [1, 1, 1]})
 
         for i in range(2):
             for j in range(3):
-                axs[i,j].set_xlim(-2.5, 2.5)
-                axs[i,j].set_ylim(-0.5, 4.5)
-                axs[i,j].xaxis.set_minor_locator(AutoMinorLocator(4))
-                axs[i,j].yaxis.set_minor_locator(AutoMinorLocator(4))
-                axs[i,j].grid(which='major', color='#968c83', linestyle='--', linewidth=0.7)
-                axs[i,j].grid(which='minor', color='#9ba4b4', linestyle=':', linewidth=0.5)
+                axs[i, j].set_xlim(-2.5, 2.5)
+                axs[i, j].set_ylim(-0.5, 4.5)
+                axs[i, j].xaxis.set_minor_locator(AutoMinorLocator(4))
+                axs[i, j].yaxis.set_minor_locator(AutoMinorLocator(4))
+                axs[i, j].grid(which='major', color='#968c83', linestyle='--', linewidth=0.7)
+                axs[i, j].grid(which='minor', color='#9ba4b4', linestyle=':', linewidth=0.5)
                 # axs[i,j].text(-0.2, -0.2, r'|y-y`|')
 
-        axs[0, 2].set_xlim(-1.5, 1.5)
+        axs[0, 2].set_xlim(-3.2, 3.2)
         axs[0, 2].set_ylim(-0.2, 10.2)
 
-        axs[1, 2].set_xlim(-1.5, 1.5)
+        axs[1, 2].set_xlim(-3.2, 3.2)
         axs[1, 2].set_ylim(-0.2, 10.2)
 
         fig_bg_loss, = axs[0, 0].plot(dela_intensity_values[:], loss_val_bg[:], '#09015f', linewidth=4.0,
@@ -112,7 +113,6 @@ class DataHelper:
                                          label='Derivative of fg-1 Region Loss', alpha=1.0)
         plt.tight_layout()
         plt.savefig('loss.png', bbox_inches='tight')
-
 
     def depict_weight_map_function(self, theta_0, theta_1):
         """create both loss and weightmap"""
@@ -141,7 +141,7 @@ class DataHelper:
 
         surf = ax.plot_surface(X, Y, weight_map, alpha=0.8, linewidth=1.5, antialiased=True, zorder=0.1,
                                vmin=0, vmax=15, rstride=1, cstride=1, cmap=cmap, norm=norm)
-                               # cmap=cm.coolwarm)
+        # cmap=cm.coolwarm)
         ax.set_zlim(-1.0, 15.1)
         ax.grid(True)
         ax.zaxis.set_major_locator(LinearLocator(15))
@@ -162,7 +162,6 @@ class DataHelper:
         #             #fg_1:
 
         '''depict loss:'''
-
 
     def _create_single_hm(self, width, height, x0, y0, sigma):
         x = np.arange(0, width, 1, float)
