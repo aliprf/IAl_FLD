@@ -47,8 +47,8 @@ class Train:
     def train(self, arch, weight_path):
         """"""
         '''create loss'''
-        c_loss = CustomLoss(dataset_name=self.dataset_name, theta_0=0.3, theta_1=0.8, omega_bg=1, omega_fg2=20,
-                            omega_fg1=100)
+        c_loss = CustomLoss(dataset_name=self.dataset_name, theta_0=0.5, theta_1=0.9, omega_bg=1, omega_fg2=20,
+                            omega_fg1=200)
 
         '''create summary writer'''
         summary_writer = tf.summary.create_file_writer(
@@ -61,7 +61,7 @@ class Train:
             model.load_weights(weight_path)
 
         '''LearningRate'''
-        _lr = 1e-2
+        _lr = 1e-3
         '''create optimizer'''
         optimizer = self._get_optimizer(lr=_lr)
 
