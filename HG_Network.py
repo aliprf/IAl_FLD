@@ -74,10 +74,7 @@ class HGNet:
         x = self._create_bottle_neck_blocks(input_layer=x)
 
         x = UpSampling2D(size=(2,2))(x)
-        x = tf.keras.layers.ZeroPadding2D(padding=((1,0),(1,0)))(x)
-
-        # x = tf.keras.layers.ZeroPadding2D()(x)
-
+        # x = tf.keras.layers.ZeroPadding2D(padding=((1,0),(1,0)))(x) # if use 224
         x = Add()([l4_res, x])
         x = self._create_bottle_neck_blocks(input_layer=x)
 

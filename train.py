@@ -47,8 +47,8 @@ class Train:
     def train(self, arch, weight_path):
         """"""
         '''create loss'''
-        c_loss = CustomLoss(dataset_name=self.dataset_name, theta_0=0.5, theta_1=0.9, omega_bg=1, omega_fg2=20,
-                            omega_fg1=200)
+        c_loss = CustomLoss(dataset_name=self.dataset_name, theta_0=0.5, theta_1=0.85, omega_bg=1, omega_fg2=2e+1,
+                            omega_fg1=2e+2)
 
         '''create summary writer'''
         summary_writer = tf.summary.create_file_writer(
@@ -95,7 +95,7 @@ class Train:
             # with summary_writer.as_default():
             #     tf.summary.scalar('Eval-LOSS', loss_eval, step=epoch)
             '''save weights'''
-            model.save('./models/asm_fw_model_' + str(epoch) + '_' + self.dataset_name + '_' + str(loss_eval) + '.h5')
+            model.save('./models/IAL' + str(epoch) + '_' + self.dataset_name + '_' + str(loss_eval) + '.h5')
             # model.save_weights(
             #     './models/asm_fw_weight_' + '_' + str(epoch) + self.dataset_name + '_' + str(loss_eval) + '.h5')
             '''calculate Learning rate'''
@@ -114,13 +114,13 @@ class Train:
 
             '''calculate loss'''
             # loss_total, loss_bg, loss_fg2, loss_fg1, loss_reg = c_loss.intensive_aware_loss(hm_gt=hm_gt,
-            loss_total, loss_bg, loss_fg2, loss_fg1 = c_loss.intensive_aware_loss(hm_gt=hm_gt,
-                                                                                  hm_prs=hm_prs,
-                                                                                  anno_gt=anno_gt,
-                                                                                  anno_prs=None,
-                                                                                  # anno_prs=[out_pnt_0, out_pnt_1,
-                                                                                  #          out_pnt_2, out_pnt_3],
-                                                                                  )
+            loss_total, loss_bg, loss_fg2, loss_fg1, loss_categorical = c_loss.intensive_aware_loss(hm_gt=hm_gt,
+                                                                                                    hm_prs=hm_prs,
+                                                                                                    anno_gt=anno_gt,
+                                                                                                    anno_prs=None,
+                                                                                                    # anno_prs=[out_pnt_0, out_pnt_1,
+                                                                                                    #          out_pnt_2, out_pnt_3],
+                                                                                                    )
         '''calculate gradient'''
         gradients_of_model = tape.gradient(loss_total, model.trainable_variables)
         '''apply Gradients:'''
@@ -128,13 +128,14 @@ class Train:
         '''printing loss Values: '''
         tf.print("->EPOCH: ", str(epoch), "->STEP: ", str(step) + '/' + str(total_steps), ' -> : LOSS: ', loss_total,
                  ' -> : loss_fg1: ', loss_fg1, ' -> : loss_fg2: ', loss_fg2, ' -> : loss_bg: ',
-                 loss_bg)  # , ' -> : loss_reg: ', loss_reg)
+                 loss_bg, ' -> : loss_categorical: ', loss_categorical)
         # print('==--==--==--==--==--==--==--==--==--')
         with summary_writer.as_default():
             tf.summary.scalar('LOSS', loss_total, step=epoch)
             tf.summary.scalar('loss_fg1', loss_fg1, step=epoch)
             tf.summary.scalar('loss_fg2', loss_fg2, step=epoch)
             tf.summary.scalar('loss_bg', loss_bg, step=epoch)
+            tf.summary.scalar('loss_categorical', loss_categorical, step=epoch)
             # tf.summary.scalar('loss_reg', loss_reg, step=epoch)
 
     def _calc_learning_rate(self, iterations, step_size, base_lr, max_lr, gamma=0.99994):

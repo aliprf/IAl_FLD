@@ -18,13 +18,26 @@ class LearningConfig:
     MIN_LR = 1e-7
     MAX_LR = 1e-2
     STEP_SIZE = 10
-    # batch_size = 3
+    # batch_size = 2
     batch_size = 5
     epochs = 1500
 
 
+class CategoricalLabels:
+    bg = 0
+    fg_2 = 1
+    fg_1 = 2
+    # max_2 = 4
+    # max_1 = 5
+
+    w_bg = 1
+    w_fg_2 = 10
+    w_fg_1 = 100
+    # w_max_2 = 100
+    # w_max_1 = 100
+
 class InputDataSize:
-    image_input_size = 224
+    image_input_size = 256
     img_center = image_input_size // 2
 
     hm_size = image_input_size // 4
@@ -37,19 +50,19 @@ class WflwConf:
     # Wflw_prefix_path = '/media/ali/data/wflw/'  # --> local
 
     '''     augmented version'''
-    augmented_train_pose = Wflw_prefix_path + 'training_set/augmented/pose/'
-    augmented_train_annotation = Wflw_prefix_path + 'training_set/augmented/annotations/'
-    augmented_train_hm = Wflw_prefix_path + 'training_set/augmented/hm/'
-    augmented_train_atr = Wflw_prefix_path + 'training_set/augmented/atrs/'
-    augmented_train_image = Wflw_prefix_path + 'training_set/augmented/images/'
-    augmented_train_tf_path = Wflw_prefix_path + 'training_set/augmented/tf/'
+    augmented_train_pose = Wflw_prefix_path + 'training_set_256/augmented/pose/'
+    augmented_train_annotation = Wflw_prefix_path + 'training_set_256/augmented/annotations/'
+    augmented_train_hm = Wflw_prefix_path + 'training_set_256/augmented/hm/'
+    augmented_train_atr = Wflw_prefix_path + 'training_set_256/augmented/atrs/'
+    augmented_train_image = Wflw_prefix_path + 'training_set_256/augmented/images/'
+    augmented_train_tf_path = Wflw_prefix_path + 'training_set_256/augmented/tf/'
     '''     original version'''
-    no_aug_train_annotation = Wflw_prefix_path + 'training_set/no_aug/annotations/'
-    no_aug_train_hm = Wflw_prefix_path + 'training_set/no_aug/hm/'
-    no_aug_train_atr = Wflw_prefix_path + 'training_set/no_aug/atrs/'
-    no_aug_train_pose = Wflw_prefix_path + 'training_set/no_aug/pose/'
-    no_aug_train_image = Wflw_prefix_path + 'training_set/no_aug/images/'
-    no_aug_train_tf_path = Wflw_prefix_path + 'training_set/no_aug/tf/'
+    no_aug_train_annotation = Wflw_prefix_path + 'training_set_256/no_aug/annotations/'
+    no_aug_train_hm = Wflw_prefix_path + 'training_set_256/no_aug/hm/'
+    no_aug_train_atr = Wflw_prefix_path + 'training_set_256/no_aug/atrs/'
+    no_aug_train_pose = Wflw_prefix_path + 'training_set_256/no_aug/pose/'
+    no_aug_train_image = Wflw_prefix_path + 'training_set_256/no_aug/images/'
+    no_aug_train_tf_path = Wflw_prefix_path + 'training_set_256/no_aug/tf/'
 
     orig_number_of_training = 7500
     orig_number_of_test = 2500
@@ -68,13 +81,13 @@ class CofwConf:
     Cofw_prefix_path = '/media/data2/alip/FL/new_data/cofw/'  # --> atlas
     # Cofw_prefix_path = '/media/ali/data/new_data/cofw/'  # --> local
 
-    augmented_train_pose = Cofw_prefix_path + 'training_set/augmented/pose/'
-    augmented_train_annotation = Cofw_prefix_path + 'training_set/augmented/annotations/'
-    augmented_train_hm = Cofw_prefix_path + 'training_set/augmented/hm/'
-    augmented_train_image = Cofw_prefix_path + 'training_set/augmented/images/'
+    augmented_train_pose = Cofw_prefix_path + 'training_set_256/augmented/pose/'
+    augmented_train_annotation = Cofw_prefix_path + 'training_set_256/augmented/annotations/'
+    augmented_train_hm = Cofw_prefix_path + 'training_set_256/augmented/hm/'
+    augmented_train_image = Cofw_prefix_path + 'training_set_256/augmented/images/'
 
-    augmented_train_tf_path = Cofw_prefix_path + 'training_set/augmented/tf/'
-    no_aug_train_tf_path = Cofw_prefix_path + 'training_set/no_aug/tf/'
+    augmented_train_tf_path = Cofw_prefix_path + 'training_set_256/augmented/tf/'
+    no_aug_train_tf_path = Cofw_prefix_path + 'training_set_256/no_aug/tf/'
 
     orig_number_of_training = 1345
     orig_number_of_test = 507
@@ -90,22 +103,22 @@ class CofwConf:
 
 
 class D300WConf:
-    w300w_prefix_path = '/media/data3/ali/FL/new_data/300W/'  # --> zeus
+    # w300w_prefix_path = '/media/data3/ali/FL/new_data/300W/'  # --> zeus
     # w300w_prefix_path = '/media/data2/alip/FL/new_data/300W/'  # --> atlas
-    # w300w_prefix_path = '/media/ali/data/new_data/300W/'  # --> local
+    w300w_prefix_path = '/media/ali/data/new_data/300W/'  # --> local
 
     orig_300W_train = w300w_prefix_path + 'orig_300W_train/'
-    augmented_train_pose = w300w_prefix_path + 'training_set/augmented/pose/'
-    augmented_train_annotation = w300w_prefix_path + 'training_set/augmented/annotations/'
-    augmented_train_hm = w300w_prefix_path + 'training_set/augmented/hm/'
-    augmented_train_image = w300w_prefix_path + 'training_set/augmented/images/'
-    augmented_train_tf_path = w300w_prefix_path + 'training_set/augmented/tf/'
+    augmented_train_pose = w300w_prefix_path + 'training_set_256/augmented/pose/'
+    augmented_train_annotation = w300w_prefix_path + 'training_set_256/augmented/annotations/'
+    augmented_train_hm = w300w_prefix_path + 'training_set_256/augmented/hm/'
+    augmented_train_image = w300w_prefix_path + 'training_set_256/augmented/images/'
+    augmented_train_tf_path = w300w_prefix_path + 'training_set_256/augmented/tf/'
 
-    no_aug_train_annotation = w300w_prefix_path + 'training_set/no_aug/annotations/'
-    no_aug_train_hm = w300w_prefix_path + 'training_set/no_aug/hm/'
-    no_aug_train_pose = w300w_prefix_path + 'training_set/no_aug/pose/'
-    no_aug_train_image = w300w_prefix_path + 'training_set/no_aug/images/'
-    no_aug_train_tf_path = w300w_prefix_path + 'training_set/no_aug/tf/'
+    no_aug_train_annotation = w300w_prefix_path + 'training_set_256/no_aug/annotations/'
+    no_aug_train_hm = w300w_prefix_path + 'training_set_256/no_aug/hm/'
+    no_aug_train_pose = w300w_prefix_path + 'training_set_256/no_aug/pose/'
+    no_aug_train_image = w300w_prefix_path + 'training_set_256/no_aug/images/'
+    no_aug_train_tf_path = w300w_prefix_path + 'training_set_256/no_aug/tf/'
 
     orig_number_of_training = 3148
     orig_number_of_test_full = 689
