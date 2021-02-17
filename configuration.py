@@ -18,8 +18,8 @@ class LearningConfig:
     MIN_LR = 1e-7
     MAX_LR = 1e-2
     STEP_SIZE = 10
+    # batch_size = 2
     batch_size = 6
-    # batch_size = 6
     epochs = 1500
 
 
@@ -31,8 +31,8 @@ class CategoricalLabels:
     # max_1 = 5
 
     w_bg = 1
-    w_fg_2 = 10
-    w_fg_1 = 100
+    w_fg_2 = 2
+    w_fg_1 = 3
     # w_max_2 = 100
     # w_max_1 = 100
 
