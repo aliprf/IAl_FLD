@@ -19,7 +19,7 @@ class LearningConfig:
     MAX_LR = 1e-2
     STEP_SIZE = 10
     # batch_size = 2
-    batch_size = 7
+    batch_size = 6
     epochs = 1500
 
 
