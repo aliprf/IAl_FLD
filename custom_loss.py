@@ -98,7 +98,9 @@ class CustomLoss:
             loss_fg2 += stack_weight[i] * (loss_fg2_low_dif + loss_fg2_high_dif)
 
             '''loss fg1'''
-            loss_fg1_high_dif = tf.math.reduce_mean(cat_loss_map * weight_map_fg1 * high_dif_map *
+            '''we DONT multiply cat_loss_map in fg_1 region: since is is very important and and we don't stop'''
+            # loss_fg1_high_dif = tf.math.reduce_mean(cat_loss_map * weight_map_fg1 * high_dif_map *
+            loss_fg1_high_dif = tf.math.reduce_mean(weight_map_fg1 * high_dif_map *
                                                     (tf.math.square(hm_gt - hm_pr) +
                                                      LearningConfig.Loss_fg_k * ln(1 + LearningConfig.Loss_threshold) -
                                                      LearningConfig.Loss_threshold ** 2))
