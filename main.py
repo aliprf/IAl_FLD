@@ -8,5 +8,5 @@ if __name__ == '__main__':
     # theta_1 = 0.8
     # dlp.depict_weight_map_function(theta_0=theta_0, theta_1=theta_1)
     # dlp.depict_loss(theta_0=theta_0, theta_1=theta_1)
-    trainer = Train(dataset_name=DatasetName.ds_300W, use_augmented=True)
+    trainer = Train(dataset_name=DatasetName.ds_wflw, use_augmented=True)
     trainer.train(arch='hgNet', weight_path=None)

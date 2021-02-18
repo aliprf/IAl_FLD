@@ -19,7 +19,7 @@ class LearningConfig:
     MAX_LR = 1e-2
     STEP_SIZE = 10
     # batch_size = 2
-    batch_size = 6
+    batch_size = 5
     epochs = 1500
 
 
@@ -45,8 +45,8 @@ class InputDataSize:
 
 
 class WflwConf:
-    # Wflw_prefix_path = '/media/data3/ali/FL/new_data/wflw/'  # --> Zeus
-    Wflw_prefix_path = '/media/data2/alip/FL/new_data/wflw/'  # --> Atlas
+    Wflw_prefix_path = '/media/data3/ali/FL/new_data/wflw/'  # --> Zeus
+    # Wflw_prefix_path = '/media/data2/alip/FL/new_data/wflw/'  # --> Atlas
     # Wflw_prefix_path = '/media/ali/data/wflw/'  # --> local
 
     '''     augmented version'''
