@@ -12,7 +12,7 @@ from numpy import save, load, asarray
 from skimage.io import imread
 
 
-class Train:
+class TrainEfn:
     def __init__(self, dataset_name, use_augmented):
         self.dataset_name = dataset_name
 
@@ -48,8 +48,9 @@ class Train:
     def train(self, arch, weight_path):
         """"""
         '''create loss'''
-        c_loss = CustomLoss(dataset_name=self.dataset_name, theta_0=0.5, theta_1=0.9, omega_bg=1, omega_fg2=2e+1,
-                            omega_fg1=2e+2)
+        c_loss = CustomLoss(dataset_name=self.dataset_name, number_of_landmark=self.num_landmark, theta_0=0.5,
+                            theta_1=0.9, omega_bg=1, omega_fg2=80,
+                            omega_fg1=100)
 
         '''create summary writer'''
         summary_writer = tf.summary.create_file_writer(
@@ -88,7 +89,7 @@ class Train:
                                 model=model, hm_gt=hm_gt, anno_gt=anno_gt, optimizer=optimizer,
                                 summary_writer=summary_writer, c_loss=c_loss)
 
-            '''evaluating part'''
+            '''evaluating part #TODO'''
             loss_eval = 0
             # img_batch_eval, hm_batch_eval, pn_batch_eval = self._create_evaluation_batch(img_val_filenames,
             #                                                                              hm_val_filenames)
@@ -106,22 +107,13 @@ class Train:
     def train_step(self, epoch, step, total_steps, images, model, hm_gt, anno_gt, optimizer, summary_writer, c_loss):
         with tf.GradientTape() as tape:
             '''create annotation_predicted'''
-            hm_prs = model(images, training=True)
-
-            # out_pnt_0 = self._convert_hm_to_pts(hm_prs[0])
-            # out_pnt_1 = self._convert_hm_to_pts(hm_prs[1])
-            # out_pnt_2 = self._convert_hm_to_pts(hm_prs[2])
-            # out_pnt_3 = self._convert_hm_to_pts(hm_prs[3])  # the last is the most important
-
+            hm_pr, anno_pr = model(images, training=True)
             '''calculate loss'''
-            # loss_total, loss_bg, loss_fg2, loss_fg1, loss_reg = c_loss.intensive_aware_loss(hm_gt=hm_gt,
-            loss_total, loss_bg, loss_fg2, loss_fg1, loss_categorical = c_loss.intensive_aware_loss(hm_gt=hm_gt,
-                                                                                                    hm_prs=hm_prs,
-                                                                                                    anno_gt=anno_gt,
-                                                                                                    anno_prs=None,
-                                                                                                    # anno_prs=[out_pnt_0, out_pnt_1,
-                                                                                                    #          out_pnt_2, out_pnt_3],
-                                                                                                    )
+            loss_total, loss_bg, loss_fg2, loss_fg1, loss_categorical = c_loss.intensive_aware_loss_with_reg(
+                hm_gt=hm_gt,
+                hm_pr=hm_pr,
+                anno_gt=anno_gt,
+                anno_pr=anno_pr)
         '''calculate gradient'''
         gradients_of_model = tape.gradient(loss_total, model.trainable_variables)
         '''apply Gradients:'''
@@ -133,10 +125,10 @@ class Train:
         # print('==--==--==--==--==--==--==--==--==--')
         with summary_writer.as_default():
             tf.summary.scalar('LOSS', loss_total, step=epoch)
-            tf.summary.scalar('loss_fg1', loss_fg1, step=epoch)
-            tf.summary.scalar('loss_fg2', loss_fg2, step=epoch)
-            tf.summary.scalar('loss_bg', loss_bg, step=epoch)
-            tf.summary.scalar('loss_categorical', loss_categorical, step=epoch)
+            tf.summary.scalar('HM_loss_fg1', loss_fg1, step=epoch)
+            tf.summary.scalar('HM_loss_fg2', loss_fg2, step=epoch)
+            tf.summary.scalar('HM_loss_bg', loss_bg, step=epoch)
+            tf.summary.scalar('HM_loss_categorical', loss_categorical, step=epoch)
             # tf.summary.scalar('loss_reg', loss_reg, step=epoch)
 
     def _calc_learning_rate(self, iterations, step_size, base_lr, max_lr, gamma=0.99994):
@@ -187,7 +179,8 @@ class Train:
         hm_batch = np.array([load(self.hm_path + file_name) for file_name in batch_y])
 
         '''in this method, we dont normalize the points'''
-        pn_batch = np.array([load(self.annotation_path + file_name) for file_name in batch_y])
+        pn_batch = np.array([dhl.load_and_normalize(self.annotation_path + file_name) for file_name in batch_y])
+
         # if self.dataset_name == DatasetName.ds_cofw:
         #     pn_batch = np.array([load(self.annotation_path + file_name) for file_name in batch_y])
         # else:
@@ -220,10 +213,10 @@ class Train:
         img_batch = np.array([imread(self.img_path + file_name) for file_name in batch_x]) / 255.0
         hm_batch = np.array([load(self.hm_path + file_name) for file_name in batch_y])
 
-        if self.dataset_name == DatasetName.ds_cofw:
-            pn_batch = np.array([load(self.annotation_path + file_name) for file_name in batch_y])
-        else:
-            pn_batch = np.array([dhl.load_and_normalize(self.annotation_path + file_name) for file_name in batch_y])
+        # if self.dataset_name == DatasetName.ds_cofw:
+        #     pn_batch = np.array([load(self.annotation_path + file_name) for file_name in batch_y])
+        # else:
+        pn_batch = np.array([dhl.load_and_normalize(self.annotation_path + file_name) for file_name in batch_y])
 
         return img_batch, hm_batch, pn_batch
 

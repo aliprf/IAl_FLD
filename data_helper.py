@@ -34,8 +34,8 @@ class DataHelper:
         y_center = height / 2
         annotation_norm = []
         for p in range(0, len(annotation), 2):
-            annotation_norm.append((x_center - annotation[p]) / width)
-            annotation_norm.append((y_center - annotation[p + 1]) / height)
+            annotation_norm.append((annotation[p] - x_center) / width)
+            annotation_norm.append((annotation[p + 1] - y_center) / height)
         return annotation_norm
 
     def depict_loss(self, theta_0, theta_1):
