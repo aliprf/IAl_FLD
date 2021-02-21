@@ -120,7 +120,7 @@ class TrainEfn:
                  ' <-> : loss_total: ', loss_total,
                  ' <-> : loss_total_hm: ', loss_total_hm, ' <-> : loss_reg: ', loss_reg,
                  ' <-> : regularization: ', regularization,  ' <-> : loss_categorical: ', loss_categorical,
-                 ' <-> : loss_fg1: ', loss_fg1, ' <-> : loss_fg2: ', loss_bg, ' <-> : loss_bg: ')
+                 ' <-> : loss_fg1: ', loss_fg1, ' <-> : loss_fg2: ', loss_fg2, ' <-> : loss_bg: ', loss_bg)
 
         # print('==--==--==--==--==--==--==--==--==--')
         with summary_writer.as_default():

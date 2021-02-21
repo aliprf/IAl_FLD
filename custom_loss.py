@@ -44,7 +44,7 @@ class CustomLoss:
         loss_reg = weight * self.regression_loss(anno_gt, anno_pr)
 
         '''regularization part'''
-        regularization = weight * self.calculate_regularization(hm_pr, anno_pr)
+        regularization = 0 #weight * self.calculate_regularization(hm_pr, anno_pr)
 
         loss_total = loss_total_hm + loss_reg + regularization
         return loss_total, loss_total_hm, loss_reg, regularization, loss_bg, loss_fg2, loss_fg1, loss_categorical
