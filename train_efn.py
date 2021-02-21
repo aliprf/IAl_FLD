@@ -109,26 +109,29 @@ class TrainEfn:
             '''create annotation_predicted'''
             hm_pr, anno_pr = model(images, training=True)
             '''calculate loss'''
-            loss_total, loss_bg, loss_fg2, loss_fg1, loss_categorical = c_loss.intensive_aware_loss_with_reg(
-                hm_gt=hm_gt,
-                hm_pr=hm_pr,
-                anno_gt=anno_gt,
-                anno_pr=anno_pr)
+            loss_total, loss_total_hm, loss_reg, regularization, loss_bg, loss_fg2, loss_fg1, loss_categorical = \
+                c_loss.intensive_aware_loss_with_reg(hm_gt=hm_gt, hm_pr=hm_pr, anno_gt=anno_gt, anno_pr=anno_pr)
         '''calculate gradient'''
         gradients_of_model = tape.gradient(loss_total, model.trainable_variables)
         '''apply Gradients:'''
         optimizer.apply_gradients(zip(gradients_of_model, model.trainable_variables))
         '''printing loss Values: '''
-        tf.print("->EPOCH: ", str(epoch), "->STEP: ", str(step) + '/' + str(total_steps), ' -> : LOSS: ', loss_total,
-                 ' -> : loss_fg1: ', loss_fg1, ' -> : loss_fg2: ', loss_fg2, ' -> : loss_bg: ',
-                 loss_bg, ' -> : loss_categorical: ', loss_categorical)
+        tf.print("->EPOCH: ", str(epoch), "->STEP: ", str(step) + '/' + str(total_steps),
+                 ' <-> : loss_total: ', loss_total,
+                 ' <-> : loss_total_hm: ', loss_total_hm, ' <-> : loss_reg: ', loss_reg,
+                 ' <-> : regularization: ', regularization,  ' <-> : loss_categorical: ', loss_categorical,
+                 ' <-> : loss_fg1: ', loss_fg1, ' <-> : loss_fg2: ', loss_bg, ' <-> : loss_bg: ')
+
         # print('==--==--==--==--==--==--==--==--==--')
         with summary_writer.as_default():
-            tf.summary.scalar('LOSS', loss_total, step=epoch)
-            tf.summary.scalar('HM_loss_fg1', loss_fg1, step=epoch)
-            tf.summary.scalar('HM_loss_fg2', loss_fg2, step=epoch)
-            tf.summary.scalar('HM_loss_bg', loss_bg, step=epoch)
-            tf.summary.scalar('HM_loss_categorical', loss_categorical, step=epoch)
+            tf.summary.scalar('loss_total', loss_total, step=epoch)
+            tf.summary.scalar('loss_total_hm', loss_total_hm, step=epoch)
+            tf.summary.scalar('loss_reg', loss_reg, step=epoch)
+            tf.summary.scalar('regularization', regularization, step=epoch)
+            tf.summary.scalar('loss_categorical', loss_categorical, step=epoch)
+            tf.summary.scalar('loss_fg1', loss_fg1, step=epoch)
+            tf.summary.scalar('loss_fg2', loss_fg2, step=epoch)
+            tf.summary.scalar('loss_bg', loss_bg, step=epoch)
             # tf.summary.scalar('loss_reg', loss_reg, step=epoch)
 
     def _calc_learning_rate(self, iterations, step_size, base_lr, max_lr, gamma=0.99994):

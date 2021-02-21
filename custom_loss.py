@@ -35,18 +35,19 @@ class CustomLoss:
 
     def intensive_aware_loss_with_reg(self, hm_gt, hm_pr, anno_gt, anno_pr):
         """"""
+        weight = 10
         '''hm loss'''
         loss_bg, loss_fg2, loss_fg1, loss_categorical = self.hm_intensive_loss_efn(hm_gt, hm_pr)
-        loss_total_hm = 10 * (loss_bg + loss_fg2 + loss_fg1) + loss_categorical
+        loss_total_hm = weight * (loss_bg + loss_fg2 + loss_fg1) + loss_categorical
 
         '''regression loss'''
-        loss_reg = self.regression_loss(anno_gt, anno_pr)
+        loss_reg = weight * self.regression_loss(anno_gt, anno_pr)
 
         '''regularization part'''
-        # regularization = self.calculate_regularization(hm_pr, anno_pr)
-        regularization = self.calculate_regularization(hm_gt, anno_gt)
+        regularization = weight * self.calculate_regularization(hm_pr, anno_pr)
 
-        return loss_total_hm, loss_bg, loss_fg2, loss_fg1, loss_categorical
+        loss_total = loss_total_hm + loss_reg + regularization
+        return loss_total, loss_total_hm, loss_reg, regularization, loss_bg, loss_fg2, loss_fg1, loss_categorical
 
     def calculate_regularization(self, hm_pr, anno_pr):
         """"""
@@ -57,14 +58,9 @@ class CustomLoss:
             [self._find_weighted_avg_of_n_biggest_points(heatmap=hm_pr[b_index, :, :, i], num_of_avg_points=2)
              for i in range(self.number_of_landmark // 2)], shape=[self.number_of_landmark]) for b_index in
             range(batch_size)], axis=0)
-
-        # for b_index in range(batch_size):
-        #     converted_item = tf.reshape(
-        #         [self._find_weighted_avg_of_n_biggest_points(heatmap=hm_pr[b_index, :, :, i], num_of_avg_points=2)
-        #          for i in range(self.number_of_landmark // 2)], shape=[self.number_of_landmark])
         '''calculate regularization'''
-
-        return 0
+        regu = tf.reduce_mean(tf.math.abs(converted_points - anno_pr))
+        return regu
 
     def regression_loss(self, anno_gt, anno_prs):
         """"""
