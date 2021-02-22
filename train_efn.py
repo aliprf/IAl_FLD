@@ -62,7 +62,7 @@ class TrainEfn:
             model.load_weights(weight_path)
 
         '''LearningRate'''
-        _lr = 1e-5
+        _lr = 1e-3
         '''create optimizer'''
         optimizer = self._get_optimizer(lr=_lr)
 
@@ -151,7 +151,7 @@ class TrainEfn:
         los_eval = np.array(tf.reduce_mean(tf.abs(hm_batch_eval - hm_pr)))
         return los_eval
 
-    def _get_optimizer(self, lr=1e-1, beta_1=0.9, beta_2=0.999, decay=1e-5):
+    def _get_optimizer(self, lr=1e-1, beta_1=0.9, beta_2=0.999, decay=1e-4):
         return tf.keras.optimizers.Adam(lr=lr, beta_1=beta_1, beta_2=beta_2, decay=decay)
 
     def _create_generators(self):
