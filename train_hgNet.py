@@ -49,7 +49,7 @@ class TrainHg:
         """"""
         '''create loss'''
         c_loss = CustomLoss(dataset_name=self.dataset_name, theta_0=0.5, theta_1=0.9, omega_bg=1, omega_fg2=80,
-                            omega_fg1=100)
+                            omega_fg1=100, number_of_landmark=self.num_landmark)
 
         '''create summary writer'''
         summary_writer = tf.summary.create_file_writer(

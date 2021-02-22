@@ -42,7 +42,6 @@ from keras.layers import Dense, MaxPooling2D, Conv2D, Flatten, Conv2DTranspose, 
     GlobalMaxPool2D
 import efficientnet.tfkeras as efn
 
-
 class CNNModel:
     def get_model(self, arch, num_landmark):
         if arch == 'hgNet':
