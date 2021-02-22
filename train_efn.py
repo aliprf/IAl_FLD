@@ -49,8 +49,7 @@ class TrainEfn:
         """"""
         '''create loss'''
         c_loss = CustomLoss(dataset_name=self.dataset_name, number_of_landmark=self.num_landmark, theta_0=0.5,
-                            theta_1=0.9, omega_bg=1, omega_fg2=80,
-                            omega_fg1=100)
+                            theta_1=0.85, omega_bg=1, omega_fg2=5, omega_fg1=10)
 
         '''create summary writer'''
         summary_writer = tf.summary.create_file_writer(
@@ -63,7 +62,7 @@ class TrainEfn:
             model.load_weights(weight_path)
 
         '''LearningRate'''
-        _lr = 1e-3
+        _lr = 1e-5
         '''create optimizer'''
         optimizer = self._get_optimizer(lr=_lr)
 
@@ -181,30 +180,14 @@ class TrainEfn:
         img_batch = np.array([imread(self.img_path + file_name) for file_name in batch_x]) / 255.0
         hm_batch = np.array([load(self.hm_path + file_name) for file_name in batch_y])
 
-        '''in this method, we dont normalize the points'''
+        # batch_size = hm_batch.shape[0]
+        # for b_i in range(batch_size):
+        #     hm_item = hm_batch[b_i, :, :, :]
+        #     hm_item_sum = np.sum(hm_item, axis=2)
+        #     print('')
+
+        '''in this method, we normalize the points'''
         pn_batch = np.array([dhl.load_and_normalize(self.annotation_path + file_name) for file_name in batch_y])
-
-        # if self.dataset_name == DatasetName.ds_cofw:
-        #     pn_batch = np.array([load(self.annotation_path + file_name) for file_name in batch_y])
-        # else:
-        #     pn_batch = np.array([dhl.load_and_normalize(self.annotation_path + file_name) for file_name in batch_y])
-
-        # '''test: print'''
-        # image_utility = ImageUtility()
-        # for i in range(LearningConfig.batch_size):
-        #     gr_s, gr_px_1, gr_Py_1 = image_utility.create_landmarks_from_normalized(pn_batch[i], 224, 224, 112, 112)
-        #     imgpr.print_image_arr(str(batch_index + 1 * (i + 1)) + 'pts_gt', img_batch[i], gr_px_1, gr_Py_1)
-        #
-        #     for ac in [80, 85, 90, 95, 97]:
-        #         pn_batch_asm = np.array([tf_utils.get_asm(input=self._load_and_normalize(pn_tr_path + file_name),
-        #                                                   dataset_name=self.dataset_name, accuracy=ac)
-        #                                  for file_name in batch_y])
-        #
-        #         asm_p_s, asm_px_1, asm_Py_1 = image_utility.create_landmarks_from_normalized(pn_batch_asm[i], 224, 224,
-        #                                                                                      112,
-        #                                                                                      112)
-        #         imgpr.print_image_arr(str(batch_index + 1 * (i + 1)) + 'pts_asm' + str(ac), img_batch[i], asm_px_1,
-        #                               asm_Py_1)
 
         return img_batch, hm_batch, pn_batch
 
@@ -222,50 +205,3 @@ class TrainEfn:
         pn_batch = np.array([dhl.load_and_normalize(self.annotation_path + file_name) for file_name in batch_y])
 
         return img_batch, hm_batch, pn_batch
-
-    @tf.autograph.experimental.do_not_convert
-    def _convert_hm_to_pts(self, hm):
-        x_center = InputDataSize.image_input_size // 2
-        width = InputDataSize.image_input_size
-        hm_arr = []
-
-        for i in range(LearningConfig.batch_size):
-            hm_t = self._from_heatmap_to_point_tensor(heatmaps=hm[i], number_of_points=3)
-            # hm_t = tf.reshape(tensor=hm_t, shape=self.num_landmark*2)
-            # '''hm is in [0,224] --> should be in [-0.5,+0.5]'''
-            # hm_t_norm = tf.math.scalar_mul(scalar=1 / width,
-            #                                x=tf.math.subtract(hm_t, np.repeat(x_center, self.num_landmark*2)))
-            # hm_arr.append(hm_t_norm)
-            hm_arr.append(hm_t)
-        '''reshape hm'''
-        hm_pts = tf.stack([hm_arr[i] for i in range(LearningConfig.batch_size)], 0)  # bs * self.num_landmark
-        return hm_pts
-
-    def _from_heatmap_to_point_tensor(self, heatmaps, number_of_points, scalar=4):
-        x = tf.stack([self._find_nth_biggest_avg_tensor(heatmaps[:, :, i], number_of_points, scalar)
-                      for i in range(self.num_landmark)], -1)
-        return x
-
-    def _find_nth_biggest_avg_tensor(self, heatmap, points, scalar):
-        weights, indices = self._top_n_indexes_tensor(heatmap, points)
-
-        x_indices = tf.cast(indices[:, 0], tf.float32)
-        y_indices = tf.cast(indices[:, 1], tf.float32)
-        '''weighted average over x and y'''
-        w_avg_x = tf.scalar_mul(1 / tf.reduce_sum(weights), tf.reduce_sum([tf.multiply(x_indices, weights)]))
-
-        # if you wanna create regression face which is 56*56 except for 224*224
-        # w_avg_x = tf.scalar_mul(1 / InputDataSize.hm_size, w_avg_x)
-
-        w_avg_y = tf.scalar_mul(1 / tf.reduce_sum(weights), tf.reduce_sum([tf.multiply(y_indices, weights)]))
-        # w_avg_y = tf.scalar_mul(1 / InputDataSize.hm_size, w_avg_y)
-
-        return tf.stack([w_avg_x, w_avg_y])
-
-    def _top_n_indexes_tensor(self, arr, n):
-        shape = tf.shape(arr)
-        # first convert it to 1-d
-        top_values, top_indices = tf.nn.top_k(tf.reshape(arr, (-1,)), n)
-        # convert again to 2d
-        top_indices = tf.stack(((top_indices // shape[1]), (top_indices % shape[1])), -1)
-        return top_values, top_indices

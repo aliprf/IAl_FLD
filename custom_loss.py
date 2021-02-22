@@ -30,15 +30,15 @@ class CustomLoss:
 
     def intensive_aware_loss(self, hm_gt, hm_prs, anno_gt, anno_prs):
         loss_bg, loss_fg2, loss_fg1, loss_categorical = self.hm_intensive_loss_stacked(hm_gt, hm_prs)
-        loss_total = 10 * (loss_bg + loss_fg2 + loss_fg1) + loss_categorical
+        loss_total = 2 * (loss_bg + loss_fg2 + loss_fg1) + loss_categorical
         return loss_total, loss_bg, loss_fg2, loss_fg1, loss_categorical
 
     def intensive_aware_loss_with_reg(self, hm_gt, hm_pr, anno_gt, anno_pr):
         """"""
-        weight = 10
+        weight = 2
         '''hm loss'''
         loss_bg, loss_fg2, loss_fg1, loss_categorical = self.hm_intensive_loss_efn(hm_gt, hm_pr)
-        loss_total_hm = weight * (loss_bg + loss_fg2 + loss_fg1) + loss_categorical
+        loss_total_hm = weight**3 * (weight * (loss_bg + loss_fg2 + loss_fg1) + loss_categorical)
 
         '''regression loss'''
         loss_reg = weight * self.regression_loss(anno_gt, anno_pr)
