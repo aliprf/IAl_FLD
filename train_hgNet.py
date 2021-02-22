@@ -44,7 +44,7 @@ class TrainHg:
                 self.annotation_path = WflwConf.no_aug_train_annotation
                 self.hm_path = WflwConf.no_aug_train_hm
 
-    # @tf.function
+    @tf.function
     def train(self, arch, weight_path):
         """"""
         '''create loss'''
@@ -81,7 +81,7 @@ class TrainHg:
                                                                 hm_train_filenames=hm_train_filenames)
                 '''convert to tensor'''
                 images = tf.cast(images, tf.float32)
-                anno_gt = tf.cast(anno_gt, tf.float32)
+                # anno_gt = tf.cast(anno_gt, tf.float32)
                 hm_gt = tf.cast(hm_gt, tf.float32)
                 '''train step'''
                 self.train_step(epoch=epoch, step=batch_index, total_steps=step_per_epoch, images=images,
@@ -157,7 +157,7 @@ class TrainHg:
         los_eval = np.array(tf.reduce_mean(tf.abs(hm_batch_eval - hm_pr)))
         return los_eval
 
-    def _get_optimizer(self, lr=1e-1, beta_1=0.9, beta_2=0.999, decay=1e-5):
+    def _get_optimizer(self, lr=1e-1, beta_1=0.9, beta_2=0.999, decay=1e-4):
         return tf.keras.optimizers.Adam(lr=lr, beta_1=beta_1, beta_2=beta_2, decay=decay)
 
     def _create_generators(self):
@@ -187,7 +187,8 @@ class TrainHg:
         hm_batch = np.array([load(self.hm_path + file_name) for file_name in batch_y])
 
         '''in this method, we dont normalize the points'''
-        pn_batch = np.array([load(self.annotation_path + file_name) for file_name in batch_y])
+        # pn_batch = np.array([load(self.annotation_path + file_name) for file_name in batch_y])
+
         # if self.dataset_name == DatasetName.ds_cofw:
         #     pn_batch = np.array([load(self.annotation_path + file_name) for file_name in batch_y])
         # else:
@@ -210,7 +211,8 @@ class TrainHg:
         #         imgpr.print_image_arr(str(batch_index + 1 * (i + 1)) + 'pts_asm' + str(ac), img_batch[i], asm_px_1,
         #                               asm_Py_1)
 
-        return img_batch, hm_batch, pn_batch
+        # return img_batch, hm_batch, pn_batch
+        return img_batch, hm_batch, None
 
     def _create_evaluation_batch(self, img_eval_filenames, hm_eval_filenames):
         dhl = DataHelper()
