@@ -48,7 +48,7 @@ class TrainEfn:
     def train(self, arch, weight_path):
         """"""
         '''create loss'''
-        c_loss = CustomLoss(dataset_name=self.dataset_name, number_of_landmark=self.num_landmark, theta_0=0.5,
+        c_loss = CustomLoss(dataset_name=self.dataset_name, number_of_landmark=self.num_landmark, theta_0=0.3,
                             theta_1=0.85, omega_bg=1, omega_fg2=5, omega_fg1=10)
 
         '''create summary writer'''
