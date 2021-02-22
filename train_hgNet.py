@@ -44,7 +44,7 @@ class TrainHg:
                 self.annotation_path = WflwConf.no_aug_train_annotation
                 self.hm_path = WflwConf.no_aug_train_hm
 
-    @tf.function
+    # @tf.function
     def train(self, arch, weight_path):
         """"""
         '''create loss'''
