@@ -27,8 +27,8 @@ class CategoricalLabels:
     # max_1 = 5
 
     w_bg = 1
-    w_fg_2 = 2
-    w_fg_1 = 3
+    w_fg_2 = 20
+    w_fg_1 = 30
     # w_max_2 = 100
     # w_max_1 = 100
 

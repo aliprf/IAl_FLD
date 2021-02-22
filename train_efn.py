@@ -49,7 +49,7 @@ class TrainEfn:
         """"""
         '''create loss'''
         c_loss = CustomLoss(dataset_name=self.dataset_name, number_of_landmark=self.num_landmark, theta_0=0.3,
-                            theta_1=0.85, omega_bg=1, omega_fg2=5, omega_fg1=10)
+                            theta_1=0.9, omega_bg=1, omega_fg2=50, omega_fg1=80)
 
         '''create summary writer'''
         summary_writer = tf.summary.create_file_writer(
