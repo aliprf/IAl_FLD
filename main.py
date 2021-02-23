@@ -13,8 +13,8 @@ if __name__ == '__main__':
     # dlp.depict_weight_map_function(theta_0=theta_0, theta_1=theta_1)
     # dlp.depict_loss(theta_0=theta_0, theta_1=theta_1)
     '''train hourGlass'''
-    # trainer = TrainHg(dataset_name=DatasetName.ds_cofw, use_augmented=True)
-    trainer = TrainHg(dataset_name=DatasetName.ds_wflw, use_augmented=True)
+    trainer = TrainHg(dataset_name=DatasetName.ds_cofw, use_augmented=True)
+    # trainer = TrainHg(dataset_name=DatasetName.ds_wflw, use_augmented=True)
     # trainer = TrainHg(dataset_name=DatasetName.ds_300W, use_augmented=True)
     trainer.train(arch='hgNet', weight_path=None)
 
