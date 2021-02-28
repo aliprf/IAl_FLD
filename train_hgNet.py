@@ -169,7 +169,7 @@ class TrainHg:
         #                                                                              hm_val_filenames)
         nme_sum = 0
         fail_counter_sum = 0
-        batch_size = 2  # LearningConfig.batch_size
+        batch_size = 1  # LearningConfig.batch_size
         step_per_epoch = int(len(img_val_filenames) // (batch_size))
         for batch_index in tqdm(range(step_per_epoch)):
             images, hm_gts, anno_gts = self._get_batch_sample(batch_index=batch_index,
