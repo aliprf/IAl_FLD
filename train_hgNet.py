@@ -52,8 +52,8 @@ class TrainHg:
                 self.annotation_path = WflwConf.no_aug_train_annotation
                 self.hm_path = WflwConf.no_aug_train_hm
             '''evaluation path:'''
-            self.eval_img_path = D300WConf.test_image_path + 'pose/'
-            self.eval_annotation_path = D300WConf.test_annotation_path + 'pose/'
+            self.eval_img_path = WflwConf.test_image_path + 'pose/'
+            self.eval_annotation_path = WflwConf.test_annotation_path + 'pose/'
 
     # @tf.function
     def train(self, arch, weight_path):
