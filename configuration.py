@@ -60,8 +60,9 @@ class WflwConf:
     no_aug_train_image = Wflw_prefix_path + 'training_set_256/no_aug/images/'
     no_aug_train_tf_path = Wflw_prefix_path + 'training_set_256/no_aug/tf/'
 
+    '''test:'''
     test_s = 'testing_set_256'
-    test_atr_path = Wflw_prefix_path + test_s + '/atrs/'
+    test_annotation_path = Wflw_prefix_path + test_s + '/annotations/'
     test_image_path = Wflw_prefix_path + test_s + '/images/'
 
     orig_number_of_training = 7500
