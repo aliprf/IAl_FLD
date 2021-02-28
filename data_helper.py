@@ -197,12 +197,12 @@ class DataHelper:
             y_gt = anno_GT[i + 1]
             error = math.sqrt(((x_pr - x_gt) ** 2) + ((y_pr - y_gt) ** 2))
 
-            manhattan_error_x = abs(x_pr - x_gt) / 224.0
-            manhattan_error_y = abs(y_pr - y_gt) / 224.0
+            # manhattan_error_x = abs(x_pr - x_gt) / 224.0
+            # manhattan_error_y = abs(y_pr - y_gt) / 224.0
 
             sum_errors += error
-            errors_arr.append(manhattan_error_x)
-            errors_arr.append(manhattan_error_y)
+            # errors_arr.append(manhattan_error_x)
+            # errors_arr.append(manhattan_error_y)
 
         NME = sum_errors / (normalizing_distance * ds_number_of_points)
         norm_error = errors_arr
@@ -234,7 +234,7 @@ class DataHelper:
         xy_points = []
         # print(heatmaps.shape) 56,56,68
         for i in range(heatmaps.shape[2]):
-            x, y = self._find_nth_biggest_avg(heatmaps[:, :, i], number_of_selected_points=5,
+            x, y = self._find_nth_biggest_avg(heatmaps[:, :, i], number_of_selected_points=3,
                                               scalar=4.0)
             x_points.append(x)
             y_points.append(y)
