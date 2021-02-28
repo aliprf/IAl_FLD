@@ -1,4 +1,4 @@
-from configuration import InputDataSize
+from configuration import InputDataSize, DatasetName
 import os
 import numpy as np
 from numpy import save, load
@@ -169,3 +169,110 @@ class DataHelper:
         gaus = np.exp(-((x - x0) ** 2 + (y - y0) ** 2) / (2 * sigma ** 2))
         gaus[gaus <= 0.01] = 0
         return gaus
+
+    def calc_NME_over_batch(self, anno_GTs, pr_hms, ds_name):
+        sum_nme = 0
+        fail_counter = 0
+        fr_threshold = 0.1
+        for i in range(pr_hms.shape[0]):
+            pr_hm = pr_hms[i, :, :, :]
+            _, _, anno_Pre = self._hm_to_points(heatmaps=pr_hm)
+            anno_GT = anno_GTs[i]
+            nme_i, norm_error = self._calculate_nme(anno_GT=anno_GT, anno_Pre=anno_Pre, ds_name=ds_name,
+                                                    ds_number_of_points=pr_hm.shape[2]*2)
+            sum_nme += nme_i
+            if nme_i > fr_threshold:
+                fail_counter += 1
+        return sum_nme, fail_counter
+
+    def _calculate_nme(self, anno_GT, anno_Pre, ds_name, ds_number_of_points):
+        normalizing_distance = self.calculate_interoccular_distance(anno_GT=anno_GT, ds_name=ds_name)
+        '''here we round all data if needed'''
+        sum_errors = 0
+        errors_arr = []
+        for i in range(0, len(anno_Pre), 2):  # two step each time
+            x_pr = anno_Pre[i]
+            y_pr = anno_Pre[i + 1]
+            x_gt = anno_GT[i]
+            y_gt = anno_GT[i + 1]
+            error = math.sqrt(((x_pr - x_gt) ** 2) + ((y_pr - y_gt) ** 2))
+
+            manhattan_error_x = abs(x_pr - x_gt) / 224.0
+            manhattan_error_y = abs(y_pr - y_gt) / 224.0
+
+            sum_errors += error
+            errors_arr.append(manhattan_error_x)
+            errors_arr.append(manhattan_error_y)
+
+        NME = sum_errors / (normalizing_distance * ds_number_of_points)
+        norm_error = errors_arr
+        return NME, norm_error
+
+    def calculate_interoccular_distance(self, anno_GT, ds_name):
+        if ds_name == DatasetName.ds_300W:
+            left_oc_x = anno_GT[72]
+            left_oc_y = anno_GT[73]
+            right_oc_x = anno_GT[90]
+            right_oc_y = anno_GT[91]
+        elif ds_name == DatasetName.ds_cofw:
+            left_oc_x = anno_GT[16]
+            left_oc_y = anno_GT[17]
+            right_oc_x = anno_GT[18]
+            right_oc_y = anno_GT[19]
+        elif ds_name == DatasetName.ds_wflw:
+            left_oc_x = anno_GT[192]
+            left_oc_y = anno_GT[193]
+            right_oc_x = anno_GT[194]
+            right_oc_y = anno_GT[195]
+
+        distance = math.sqrt(((left_oc_x - right_oc_x) ** 2) + ((left_oc_y - right_oc_y) ** 2))
+        return distance
+
+    def _hm_to_points(self, heatmaps):
+        x_points = []
+        y_points = []
+        xy_points = []
+        # print(heatmaps.shape) 56,56,68
+        for i in range(heatmaps.shape[2]):
+            x, y = self._find_nth_biggest_avg(heatmaps[:, :, i], number_of_selected_points=5,
+                                              scalar=4.0)
+            x_points.append(x)
+            y_points.append(y)
+            xy_points.append(x)
+            xy_points.append(y)
+        return np.array(x_points), np.array(y_points), np.array(xy_points)
+
+    def _find_nth_biggest_avg(self, heatmap, number_of_selected_points, scalar):
+        indices = self._top_n_indexes(heatmap, number_of_selected_points)
+
+        x_arr = []
+        y_arr = []
+        w_arr = []
+        x_s = 0.0
+        y_s = 0.0
+        w_s = 0.0
+
+        for index in indices:
+            x_arr.append(index[0])
+            y_arr.append(index[1])
+            w_arr.append(heatmap[index[0], index[1]])
+        #
+        for i in range(len(x_arr)):
+            x_s += w_arr[i]*x_arr[i]
+            y_s += w_arr[i]*y_arr[i]
+            w_s += w_arr[i]
+        x = (x_s * scalar)/w_s
+        y = (y_s * scalar)/w_s
+
+        # x = (0.75 * x_arr[1] + 0.25 * x_arr[0]) * scalar
+        # y = (0.75 * y_arr[1] + 0.25 * y_arr[0]) * scalar
+
+        return y, x
+    def _top_n_indexes(self, arr, n):
+        import bottleneck as bn
+        idx = bn.argpartition(arr, arr.size - n, axis=None)[-n:]
+        width = arr.shape[1]
+        xxx = [divmod(i, width) for i in idx]
+        # result = np.where(arr == np.amax(arr))
+        # return result
+        return xxx

@@ -172,7 +172,7 @@ class CustomLoss:
         loss_fg1 = 0.0
         loss_categorical = 0.0
         threshold = LearningConfig.Loss_threshold
-        stack_weight = [1.0, 1.0, 1.0, 3.0]
+        stack_weight = [1.0, 2.0, 3.0, 12.0] # two times more than sum of the previous layers
         for i, hm_pr in enumerate(hm_prs):
             '''loss categorical'''
             pr_categorical_map_bg = tf.where(hm_pr < self.theta_0, CategoricalLabels.bg, 0)

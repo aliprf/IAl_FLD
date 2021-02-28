@@ -14,8 +14,8 @@ class LearningConfig:
     Loss_fg_k = 10
     Loss_threshold = 0.5
 
-    # batch_size = 2
-    batch_size = 10
+    batch_size = 3
+    # batch_size = 10
     epochs = 1500
 
 
@@ -27,8 +27,8 @@ class CategoricalLabels:
     # max_1 = 5
 
     w_bg = 1
-    w_fg_2 = 2
-    w_fg_1 = 3
+    w_fg_2 = 5
+    w_fg_1 = 10
     # w_max_2 = 100
     # w_max_1 = 100
 
@@ -60,6 +60,10 @@ class WflwConf:
     no_aug_train_image = Wflw_prefix_path + 'training_set_256/no_aug/images/'
     no_aug_train_tf_path = Wflw_prefix_path + 'training_set_256/no_aug/tf/'
 
+    test_s = 'testing_set_256'
+    test_atr_path = Wflw_prefix_path + test_s + '/atrs/'
+    test_image_path = Wflw_prefix_path + test_s + '/images/'
+
     orig_number_of_training = 7500
     orig_number_of_test = 2500
 
@@ -84,6 +88,10 @@ class CofwConf:
 
     augmented_train_tf_path = Cofw_prefix_path + 'training_set_256/augmented/tf/'
     no_aug_train_tf_path = Cofw_prefix_path + 'training_set_256/no_aug/tf/'
+
+    test_s = 'testing_set_256'
+    test_annotation_path = Cofw_prefix_path + test_s + '/annotations/'
+    test_image_path = Cofw_prefix_path + test_s + '/images/'
 
     orig_number_of_training = 1345
     orig_number_of_test = 507
@@ -115,6 +123,12 @@ class D300WConf:
     no_aug_train_pose = w300w_prefix_path + 'training_set_256/no_aug/pose/'
     no_aug_train_image = w300w_prefix_path + 'training_set_256/no_aug/images/'
     no_aug_train_tf_path = w300w_prefix_path + 'training_set_256/no_aug/tf/'
+
+    '''test:'''
+    test_s = 'testing_set_256'
+    test_annotation_path = w300w_prefix_path + test_s + '/annotations/'
+    test_image_path = w300w_prefix_path + test_s + '/images/'
+    #
 
     orig_number_of_training = 3148
     orig_number_of_test_full = 689
