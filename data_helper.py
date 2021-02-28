@@ -179,7 +179,7 @@ class DataHelper:
             _, _, anno_Pre = self._hm_to_points(heatmaps=pr_hm)
             anno_GT = anno_GTs[i]
             nme_i, norm_error = self._calculate_nme(anno_GT=anno_GT, anno_Pre=anno_Pre, ds_name=ds_name,
-                                                    ds_number_of_points=pr_hm.shape[2]*2)
+                                                    ds_number_of_points=pr_hm.shape[2])
             sum_nme += nme_i
             if nme_i > fr_threshold:
                 fail_counter += 1
