@@ -184,12 +184,12 @@ class TrainHg:
                                                         ds_name=self.dataset_name)
             nme_sum += bath_nme
             fail_counter_sum += bath_fr
-        print('nme_sum:')
-        print(nme_sum)
+
         '''calculate total'''
         fr = 100 * fail_counter_sum / len(img_val_filenames)
         nme = 100 * nme_sum / len(img_val_filenames)
-
+        print(nme)
+        print(fr)
         return nme, fr
 
     def _get_optimizer(self, lr=1e-1, beta_1=0.9, beta_2=0.999, decay=1e-4):
