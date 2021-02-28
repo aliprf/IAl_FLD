@@ -11,8 +11,9 @@ class DatasetType:
 
 
 class LearningConfig:
-    Loss_fg_k = 10
+    Loss_fg_k = 5
     Loss_threshold = 0.5
+    Loss_threshold_2 = 0.03
 
     # batch_size = 3
     batch_size = 10
@@ -28,7 +29,7 @@ class CategoricalLabels:
 
     w_bg = 1
     w_fg_2 = 20
-    w_fg_1 = 20
+    w_fg_1 = 30
     # w_max_2 = 100
     # w_max_1 = 100
 

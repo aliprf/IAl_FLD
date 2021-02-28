@@ -8,8 +8,8 @@ from data_helper import DataHelper
 if __name__ == '__main__':
     dlp = DataHelper()
     '''loss'''
-    # theta_0 = 0.2
-    # theta_1 = 0.8
+    theta_0 = 0.6
+    theta_1 = 0.9
     # dlp.depict_weight_map_function(theta_0=theta_0, theta_1=theta_1)
     # dlp.depict_loss(theta_0=theta_0, theta_1=theta_1)
     '''train hourGlass'''

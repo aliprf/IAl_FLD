@@ -29,7 +29,7 @@ class CustomLoss:
         self.omega_fg1 = omega_fg1
 
     def intensive_aware_loss(self, hm_gt, hm_prs, anno_gt, anno_prs):
-        weight = 50
+        weight = 20
         loss_bg, loss_fg2, loss_fg1, loss_categorical = self.hm_intensive_loss_stacked(hm_gt, hm_prs)
         loss_total = weight * (loss_bg + loss_fg2 + loss_fg1) + loss_categorical
         return loss_total, loss_bg, loss_fg2, loss_fg1, loss_categorical
@@ -39,13 +39,13 @@ class CustomLoss:
         weight = 2
         '''hm loss'''
         loss_bg, loss_fg2, loss_fg1, loss_categorical = self.hm_intensive_loss_efn(hm_gt, hm_pr)
-        loss_total_hm = weight**3 * (weight * (loss_bg + loss_fg2 + loss_fg1) + loss_categorical)
+        loss_total_hm = weight ** 3 * (weight * (loss_bg + loss_fg2 + loss_fg1) + loss_categorical)
 
         '''regression loss'''
         loss_reg = weight * self.regression_loss(anno_gt, anno_pr)
 
         '''regularization part'''
-        regularization = 0 #weight * self.calculate_regularization(hm_pr, anno_pr)
+        regularization = 0  # weight * self.calculate_regularization(hm_pr, anno_pr)
 
         loss_total = loss_total_hm + loss_reg + regularization
         return loss_total, loss_total_hm, loss_reg, regularization, loss_bg, loss_fg2, loss_fg1, loss_categorical
@@ -171,8 +171,10 @@ class CustomLoss:
         loss_fg2 = 0.0
         loss_fg1 = 0.0
         loss_categorical = 0.0
+
         threshold = LearningConfig.Loss_threshold
-        stack_weight = [1.0, 2.0, 3.0, 12.0] # two times more than sum of the previous layers
+        threshold_2 = LearningConfig.Loss_threshold_2
+        stack_weight = [1.0, 1.0, 1.0, 6.0]  # two times more than sum of the previous layers
         for i, hm_pr in enumerate(hm_prs):
             '''loss categorical'''
             pr_categorical_map_bg = tf.where(hm_pr < self.theta_0, CategoricalLabels.bg, 0)
@@ -194,34 +196,45 @@ class CustomLoss:
             '''create high and low dif map'''
             high_dif_map = tf.where(delta_intensity >= threshold, 1.0, 0.0)
             low_dif_map = tf.where(delta_intensity < threshold, 1.0, 0.0)
+            fg_soft_low_dif_map = tf.where(delta_intensity < threshold_2, 1.0, 0.0)
+
             '''loss bg:'''
             loss_bg_low_dif = tf.math.reduce_mean(
                 cat_loss_map * weight_map_bg * low_dif_map * 0.5 * tf.math.square(hm_gt - hm_pr))
+
             loss_bg_high_dif = tf.math.reduce_mean(
                 cat_loss_map * weight_map_bg * high_dif_map * (tf.math.square(hm_gt - hm_pr) - 0.5 * threshold ** 2))
+
             loss_bg += stack_weight[i] * (loss_bg_low_dif + loss_bg_high_dif)
 
             '''loss fg2'''
             loss_fg2_low_dif = tf.math.reduce_mean(
-                cat_loss_map * weight_map_fg2 * low_dif_map * tf.math.square(hm_gt - hm_pr))
+                cat_loss_map * weight_map_fg2 * low_dif_map * tf.math.abs(hm_gt - hm_pr))
 
             loss_fg2_high_dif = tf.math.reduce_mean(
-                cat_loss_map * weight_map_fg2 * high_dif_map * (tf.math.abs(hm_gt - hm_pr) + threshold ** 2))
+                cat_loss_map * weight_map_fg2 * high_dif_map * (tf.math.square(hm_gt - hm_pr) + threshold ** 2))
 
             loss_fg2 += stack_weight[i] * (loss_fg2_low_dif + loss_fg2_high_dif)
 
             '''loss fg1'''
             '''we DONT multiply cat_loss_map in fg_1 region: since is is very important and and we don't stop'''
-            # loss_fg1_high_dif = tf.math.reduce_mean(cat_loss_map * weight_map_fg1 * high_dif_map *
-            loss_fg1_high_dif = tf.math.reduce_mean(weight_map_fg1 * high_dif_map *
-                                                    (tf.math.square(hm_gt - hm_pr) +
-                                                     LearningConfig.Loss_fg_k * ln(1 + LearningConfig.Loss_threshold) -
-                                                     LearningConfig.Loss_threshold ** 2))
+
+            '''main'''
+            loss_fg1_low_dif_soft = tf.math.reduce_mean(
+                weight_map_fg1 * fg_soft_low_dif_map * (tf.math.abs(hm_gt - hm_pr)))
 
             loss_fg1_low_dif = tf.math.reduce_mean(
-                weight_map_fg1 * low_dif_map * (LearningConfig.Loss_fg_k * tf.math.log(tf.math.abs(hm_gt - hm_pr) + 1)))
+                weight_map_fg1 * low_dif_map *
+                (LearningConfig.Loss_fg_k * tf.math.log(tf.math.abs(hm_gt - hm_pr) + 1)
+                 + threshold_2 - LearningConfig.Loss_fg_k * ln(1 + threshold_2)))
 
-            loss_fg1 = stack_weight[i] * (loss_fg1_high_dif + loss_fg1_low_dif)
+            loss_fg1_high_dif = tf.math.reduce_mean(
+                weight_map_fg1 * high_dif_map *
+                (tf.math.square(hm_gt - hm_pr) +
+                 LearningConfig.Loss_fg_k * ln(threshold + 1)
+                 + threshold_2 - LearningConfig.Loss_fg_k * ln(1 + threshold_2) - threshold ** 2))
+
+            loss_fg1 = stack_weight[i] * (loss_fg1_low_dif_soft + loss_fg1_low_dif + loss_fg1_high_dif)
 
         return loss_bg, loss_fg2, loss_fg1, loss_categorical
 
