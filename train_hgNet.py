@@ -38,8 +38,8 @@ class TrainHg:
             self.annotation_path = CofwConf.augmented_train_annotation
             self.hm_path = CofwConf.augmented_train_hm
             '''evaluation path:'''
-            self.eval_img_path = D300WConf.test_image_path
-            self.eval_annotation_path = D300WConf.test_annotation_path
+            self.eval_img_path = CofwConf.test_image_path
+            self.eval_annotation_path = CofwConf.test_annotation_path
 
         if dataset_name == DatasetName.ds_wflw:
             self.num_landmark = WflwConf.num_of_landmarks * 2
