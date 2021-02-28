@@ -59,7 +59,7 @@ class TrainHg:
     def train(self, arch, weight_path):
         """"""
         '''create loss'''
-        c_loss = CustomLoss(dataset_name=self.dataset_name, theta_0=0.6, theta_1=0.9, omega_bg=1, omega_fg2=50,
+        c_loss = CustomLoss(dataset_name=self.dataset_name, theta_0=0.5, theta_1=0.85, omega_bg=1, omega_fg2=50,
                             omega_fg1=100, number_of_landmark=self.num_landmark)
 
         '''create summary writer'''
@@ -75,7 +75,7 @@ class TrainHg:
         '''LearningRate'''
         _lr = 1e-4
         '''create optimizer'''
-        optimizer = self._get_optimizer(lr=_lr, decay=1e-6)
+        optimizer = self._get_optimizer(lr=_lr, decay=1e-5)
 
         '''create sample generator'''
         # img_train_filenames, img_val_filenames, hm_train_filenames, hm_val_filenames = self._create_generators()
@@ -85,8 +85,8 @@ class TrainHg:
 
         #
         nme, fr = self._eval_model(model, img_val_filenames, pn_val_filenames)
-        print(nme)
-        print(fr)
+        print('nme:' + str(nme))
+        print('fr:' + str(fr))
         '''create train configuration'''
         step_per_epoch = len(img_train_filenames) // LearningConfig.batch_size
 
@@ -188,12 +188,14 @@ class TrainHg:
         '''calculate total'''
         fr = 100 * fail_counter_sum / len(img_val_filenames)
         nme = 100 * nme_sum / len(img_val_filenames)
-        print(nme)
-        print(fr)
+        print('nme:' + str(nme))
+        print('fr:' + str(fr))
         return nme, fr
 
     def _get_optimizer(self, lr=1e-1, beta_1=0.9, beta_2=0.999, decay=1e-4):
-        return tf.keras.optimizers.Adam(lr=lr, beta_1=beta_1, beta_2=beta_2, decay=decay)
+        # return tf.keras.optimizers.Adam(lr=lr, beta_1=beta_1, beta_2=beta_2, decay=decay)
+        # return tf.keras.optimizers.RMSprop(lr=lr, beta_1=beta_1, beta_2=beta_2, decay=decay)
+        return tf.keras.optimizers.SGD(lr=lr)
 
     def _create_generators(self, img_path=None, hm_path=None):
         dlp = DataHelper()
