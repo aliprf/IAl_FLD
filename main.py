@@ -15,14 +15,14 @@ if __name__ == '__main__':
     '''train hourGlass'''
     # trainer = TrainHg(dataset_name=DatasetName.ds_cofw, use_augmented=True)
     # trainer = TrainHg(dataset_name=DatasetName.ds_wflw, use_augmented=True)
-    trainer = TrainHg(dataset_name=DatasetName.ds_300W, use_augmented=True)
-    # trainer.train(arch='hgNet', weight_path=None)
-    trainer.train(arch='hgNet', weight_path='./models/last.h5')
+    # trainer = TrainHg(dataset_name=DatasetName.ds_300W, use_augmented=True)
+    # # trainer.train(arch='hgNet', weight_path=None)
+    # trainer.train(arch='hgNet', weight_path='./models/last.h5')
 
 
     '''train hourGlass'''
     # trainer_efn = TrainEfn(dataset_name=DatasetName.ds_cofw, use_augmented=True)
-    # trainer_efn = TrainEfn(dataset_name=DatasetName.ds_wflw, use_augmented=True)
+    trainer_efn = TrainEfn(dataset_name=DatasetName.ds_wflw, use_augmented=True)
     # trainer_efn = TrainEfn(dataset_name=DatasetName.ds_300W, use_augmented=True)
     # trainer_efn.train(arch='efn', weight_path=None)
-    # trainer_efn.train(arch='efn', weight_path='./models/last_efn.h5')
+    trainer_efn.train(arch='efn', weight_path='./models/last_efn.h5')

@@ -10,6 +10,8 @@ from sklearn.utils import shuffle
 from sklearn.model_selection import train_test_split
 from numpy import save, load, asarray
 from skimage.io import imread
+from PIL import Image
+from tqdm import tqdm
 
 
 class TrainEfn:
@@ -26,12 +28,18 @@ class TrainEfn:
                 self.img_path = D300WConf.no_aug_train_image
                 self.annotation_path = D300WConf.no_aug_train_annotation
                 self.hm_path = D300WConf.no_aug_train_hm
+            '''evaluation path:'''
+            self.eval_img_path = D300WConf.test_image_path + 'challenging/'
+            self.eval_annotation_path = D300WConf.test_annotation_path + 'challenging/'
 
         if dataset_name == DatasetName.ds_cofw:
             self.num_landmark = CofwConf.num_of_landmarks * 2
             self.img_path = CofwConf.augmented_train_image
             self.annotation_path = CofwConf.augmented_train_annotation
             self.hm_path = CofwConf.augmented_train_hm
+            '''evaluation path:'''
+            self.eval_img_path = CofwConf.test_image_path
+            self.eval_annotation_path = CofwConf.test_annotation_path
 
         if dataset_name == DatasetName.ds_wflw:
             self.num_landmark = WflwConf.num_of_landmarks * 2
@@ -43,6 +51,9 @@ class TrainEfn:
                 self.img_path = WflwConf.no_aug_train_image
                 self.annotation_path = WflwConf.no_aug_train_annotation
                 self.hm_path = WflwConf.no_aug_train_hm
+            '''evaluation path:'''
+            self.eval_img_path = WflwConf.test_image_path + 'pose/'
+            self.eval_annotation_path = WflwConf.test_annotation_path + 'pose/'
 
     # @tf.function
     def train(self, arch, weight_path):
@@ -67,7 +78,15 @@ class TrainEfn:
         optimizer = self._get_optimizer(lr=_lr)
 
         '''create sample generator'''
-        img_train_filenames, img_val_filenames, hm_train_filenames, hm_val_filenames = self._create_generators()
+        img_train_filenames, hm_train_filenames = self._create_generators()
+        img_val_filenames, pn_val_filenames = self._create_generators(img_path=self.eval_img_path,
+                                                                      hm_path=self.eval_annotation_path)
+
+        #
+        nme, fr = self._eval_model(model, img_val_filenames, pn_val_filenames)
+        print('nme:' + str(nme))
+        print('fr:' + str(fr))
+
         '''create train configuration'''
         step_per_epoch = len(img_train_filenames) // LearningConfig.batch_size
 
@@ -89,16 +108,21 @@ class TrainEfn:
                                 summary_writer=summary_writer, c_loss=c_loss)
 
             '''evaluating part #TODO'''
-            loss_eval = 0
-            # img_batch_eval, hm_batch_eval, pn_batch_eval = self._create_evaluation_batch(img_val_filenames,
-            #                                                                              hm_val_filenames)
-            # loss_eval = self._eval_model(img_batch_eval, hm_batch_eval, model)
-            # with summary_writer.as_default():
-            #     tf.summary.scalar('Eval-LOSS', loss_eval, step=epoch)
+            nme, fr = self._eval_model(model, img_val_filenames, pn_val_filenames)
+            with summary_writer.as_default():
+                tf.summary.scalar('Eval-nme', nme, step=epoch)
+                tf.summary.scalar('Eval-fr', fr, step=epoch)
+
             '''save weights'''
-            model.save('./models/IAL' + str(epoch) + '_' + self.dataset_name + '_' + str(loss_eval) + '.h5')
-            # model.save_weights(
-            #     './models/asm_fw_weight_' + '_' + str(epoch) + self.dataset_name + '_' + str(loss_eval) + '.h5')
+            save_path = './models/'
+            if self.dataset_name == DatasetName.ds_cofw:
+                save_path = '/media/data2/alip/HM_WEIGHTs/cofw/efn/1_march/'
+            elif self.dataset_name == DatasetName.ds_wflw:
+                save_path = '/media/data2/alip/HM_WEIGHTs/wflw/efn/1_march/'
+
+            model.save(save_path + 'IAL_efn' + str(epoch) + '_' + self.dataset_name + '_nme_' + str(nme)
+                       + '_fr_' + str(fr) + '.h5')
+
             '''calculate Learning rate'''
             # _lr = self._calc_learning_rate(iterations=epoch, step_size=10, base_lr=1e-5, max_lr=1e-2)
             # optimizer = self._get_optimizer(lr=_lr)
@@ -146,23 +170,52 @@ class TrainEfn:
         print('LR is: ' + str(lr))
         return lr
 
-    def _eval_model(self, img_batch_eval, hm_batch_eval, model):
-        hm_pr = model(img_batch_eval)
-        los_eval = np.array(tf.reduce_mean(tf.abs(hm_batch_eval - hm_pr)))
-        return los_eval
+    def _eval_model(self, model, img_val_filenames, hm_val_filenames):
+        dhl = DataHelper()
+        # img_batch_eval, hm_batch_eval, pn_batch_eval = self._create_evaluation_batch(img_val_filenames,
+        #                                                                              hm_val_filenames)
+        nme_sum = 0
+        fail_counter_sum = 0
+        batch_size = 5  # LearningConfig.batch_size
+        step_per_epoch = int(len(img_val_filenames) // (batch_size))
+        for batch_index in tqdm(range(step_per_epoch)):
+            images, hm_gts, anno_gts = self._get_batch_sample(batch_index=batch_index,
+                                                              img_train_filenames=img_val_filenames,
+                                                              hm_train_filenames=hm_val_filenames, is_eval=True,
+                                                              batch_size=batch_size)
+            '''predict:'''
+            hm_prs = model.predict_on_batch(images)  # hm_pr: 4, bs, 64, 64, 68
+            hm_prs_last_channel = np.array(hm_prs)[3, :, :, :]  # bs, 64, 64, 68
+            '''calculate NME for batch'''
+            bath_nme, bath_fr = dhl.calc_NME_over_batch(anno_GTs=anno_gts, pr_hms=hm_prs_last_channel,
+                                                        ds_name=self.dataset_name)
+            nme_sum += bath_nme
+            fail_counter_sum += bath_fr
+
+        '''calculate total'''
+        fr = 100 * fail_counter_sum / len(img_val_filenames)
+        nme = 100 * nme_sum / len(img_val_filenames)
+        print('nme:' + str(nme))
+        print('fr:' + str(fr))
+        return nme, fr
 
     def _get_optimizer(self, lr=1e-1, beta_1=0.9, beta_2=0.999, decay=1e-4):
         return tf.keras.optimizers.Adam(lr=lr, beta_1=beta_1, beta_2=beta_2, decay=decay)
 
-    def _create_generators(self):
+    def _create_generators(self, img_path=None, hm_path=None):
         dlp = DataHelper()
-        filenames, hm_labels = dlp.create_image_and_labels_name(img_path=self.img_path, hm_path=self.hm_path)
+        if img_path is None:
+            filenames, hm_labels = dlp.create_image_and_labels_name(img_path=self.img_path, hm_path=self.hm_path)
+        else:
+            filenames, hm_labels = dlp.create_image_and_labels_name(img_path=img_path, hm_path=hm_path)
 
-        filenames_shuffled, y_labels_shuffled = shuffle(filenames, hm_labels)
-        img_train_filenames, img_val_filenames, hm_train, hm_val = train_test_split(
-            filenames_shuffled, y_labels_shuffled, test_size=LearningConfig.batch_size, random_state=1)
+        img_train_filenames, hm_train = shuffle(filenames, hm_labels)
+        # filenames_shuffled, y_labels_shuffled = shuffle(filenames, hm_labels)
+        # img_train_filenames, img_val_filenames, hm_train, hm_val = train_test_split(
+        #     filenames_shuffled, y_labels_shuffled, test_size=LearningConfig.batch_size, random_state=1)
 
-        return img_train_filenames, img_val_filenames, hm_train, hm_val
+        # return img_train_filenames, img_val_filenames, hm_train, hm_val
+        return img_train_filenames, hm_train
 
     def _shuffle_data(self, filenames, labels):
         filenames_shuffled, y_labels_shuffled = shuffle(filenames, labels)
