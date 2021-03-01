@@ -184,10 +184,10 @@ class TrainEfn:
                                                               hm_train_filenames=hm_val_filenames, is_eval=True,
                                                               batch_size=batch_size)
             '''predict:'''
-            hm_prs = model.predict_on_batch(images)  # hm_pr: 4, bs, 64, 64, 68
-            hm_prs_last_channel = np.array(hm_prs)[0]  # bs, 64, 64, 68
+            hm_prs = model.predict_on_batch(images) [0] # hm_pr: 4, bs, 64, 64, 68
+            # hm_prs_last_channel = np.array(hm_prs) # bs, 64, 64, 68
             '''calculate NME for batch'''
-            bath_nme, bath_fr = dhl.calc_NME_over_batch(anno_GTs=anno_gts, pr_hms=hm_prs_last_channel,
+            bath_nme, bath_fr = dhl.calc_NME_over_batch(anno_GTs=anno_gts, pr_hms=hm_prs,
                                                         ds_name=self.dataset_name)
             nme_sum += bath_nme
             fail_counter_sum += bath_fr
