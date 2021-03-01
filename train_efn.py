@@ -221,26 +221,32 @@ class TrainEfn:
         filenames_shuffled, y_labels_shuffled = shuffle(filenames, labels)
         return filenames_shuffled, y_labels_shuffled
 
-    def _get_batch_sample(self, batch_index, img_train_filenames, hm_train_filenames):
+    def _get_batch_sample(self, batch_index, img_train_filenames, hm_train_filenames, is_eval=False, batch_size=None):
+        """"""
+        '''create batch data and normalize images'''
         dhl = DataHelper()
 
-        '''create batch data and normalize images'''
-        batch_x = img_train_filenames[
-                  batch_index * LearningConfig.batch_size:(batch_index + 1) * LearningConfig.batch_size]
-        batch_y = hm_train_filenames[
-                  batch_index * LearningConfig.batch_size:(batch_index + 1) * LearningConfig.batch_size]
         '''create img and annotations'''
-        img_batch = np.array([imread(self.img_path + file_name) for file_name in batch_x]) / 255.0
-        hm_batch = np.array([load(self.hm_path + file_name) for file_name in batch_y])
+        if is_eval:
+            batch_x = img_train_filenames[
+                      batch_index * batch_size:(batch_index + 1) * batch_size]
+            batch_y = hm_train_filenames[
+                      batch_index * batch_size:(batch_index + 1) * batch_size]
 
-        # batch_size = hm_batch.shape[0]
-        # for b_i in range(batch_size):
-        #     hm_item = hm_batch[b_i, :, :, :]
-        #     hm_item_sum = np.sum(hm_item, axis=2)
-        #     print('')
+            img_batch = np.array([imread(self.eval_img_path + file_name) for file_name in batch_x]) / 255.0
+            hm_batch = None  # np.array([load(self.eval_annotation_path + file_name) for file_name in batch_y])
+            pn_batch = np.array([load(self.eval_annotation_path + file_name) for file_name in
+                                 batch_y])  # for evaluation, we don't need normalized ground truth points
 
-        '''in this method, we normalize the points'''
-        pn_batch = np.array([dhl.load_and_normalize(self.annotation_path + file_name) for file_name in batch_y])
+        else:
+            batch_x = img_train_filenames[
+                      batch_index * LearningConfig.batch_size:(batch_index + 1) * LearningConfig.batch_size]
+            batch_y = hm_train_filenames[
+                      batch_index * LearningConfig.batch_size:(batch_index + 1) * LearningConfig.batch_size]
+
+            img_batch = np.array([imread(self.img_path + file_name) for file_name in batch_x]) / 255.0
+            hm_batch = np.array([load(self.hm_path + file_name) for file_name in batch_y])
+            pn_batch = np.array([dhl.load_and_normalize(self.annotation_path + file_name) for file_name in batch_y])
 
         return img_batch, hm_batch, pn_batch
 
