@@ -107,10 +107,10 @@ class DataHelper:
         axs[1, 2].set_ylim(-0, 5)
 
         ''''''
-        axs[0, 3].set_xlim(-0.3, 0.3)
-        axs[0, 3].set_ylim(-0.0, 0.6)
-        axs[1, 3].set_xlim(-0.3, 0.3)
-        axs[1, 3].set_ylim(0.7, 1.3)
+        axs[0, 3].set_xlim(-0.2, 0.2)
+        axs[0, 3].set_ylim(-0.0, 0.4)
+        axs[1, 3].set_xlim(-0.2, 0.2)
+        axs[1, 3].set_ylim(0.8, 1.2)
 
         fig_bg_loss, = axs[0, 0].plot(dela_intensity_values[:], loss_val_bg[:], '#09015f', linewidth=4.0,
                                       label='bg Region Loss', alpha=1.0)
@@ -137,36 +137,48 @@ class DataHelper:
     def depict_weight_map_function(self, theta_0, theta_1):
         """create both loss and weightmap"""
         '''create sample heatmap'''
-        sample_hm = self._create_single_hm(width=56, height=56, x0=23, y0=23, sigma=7)
+        sample_hm = self._create_single_hm(width=64, height=64, x0=32, y0=32, sigma=10)
         '''create weight'''
         weight_map = np.zeros_like(sample_hm)
         weight_map[sample_hm < theta_0] = 1
         weight_map[np.where(np.logical_and(sample_hm >= theta_0, sample_hm < theta_1))] = 5
-        weight_map[sample_hm >= theta_1] = 15
+        weight_map[sample_hm >= theta_1] = 10
 
         '''depict weight'''
-        dpi = 80
+        dpi = 50
         width = 1400
         height = 1400
         figsize = width / float(dpi), height / float(dpi)
         fig_1 = plt.figure(figsize=figsize)
         ax = fig_1.gca(projection='3d')
-        x = np.linspace(0, 56, 56)
-        y = np.linspace(0, 56, 56)
+        x = np.linspace(0, 64, 64)
+        y = np.linspace(0, 64, 64)
         X, Y = np.meshgrid(x, y)
 
-        cmap = colors.ListedColormap(['#9088d4', '#cbbcb1', '#16697a', '#cbbcb1', '#a20a0a'])
-        boundaries = [0, 1.01, 5, 5.1, 14.99, 15]
-        norm = colors.BoundaryNorm(boundaries, cmap.N, clip=False)
+        _cmap = colors.ListedColormap(['#9088d4', '#cbbcb1', '#16697a', '#cbbcb1', '#a20a0a'])
+        boundaries = [0, 1.01, 5, 5.1, 9.99, 10]
+        norm = colors.BoundaryNorm(boundaries, _cmap.N, clip=True)
 
-        surf = ax.plot_surface(X, Y, weight_map, alpha=0.8, linewidth=1.5, antialiased=True, zorder=0.1,
-                               vmin=0, vmax=15, rstride=1, cstride=1, cmap=cmap, norm=norm)
+        surf = ax.plot_surface(X, Y, weight_map, alpha=0.8, linewidth=1.5, antialiased=False, zorder=0.1,
+                               vmin=0, vmax=100, rstride=1, cstride=1, cmap=_cmap, norm=norm)
+
+        # surf_hm = ax.plot_surface(X, Y, sample_hm*10, alpha=0.9, linewidth=1.5, antialiased=False, zorder=0.1,
+        #                        vmin=0, vmax=10, cmap=cm.coolwarm)
         # cmap=cm.coolwarm)
-        ax.set_zlim(-1.0, 15.1)
-        ax.grid(True)
-        ax.zaxis.set_major_locator(LinearLocator(15))
+        ax.set_zlim(0.1, 10.0)
+        # ax.grid(True)
+        ax.zaxis.set_major_locator(LinearLocator(1))
         ax.zaxis.set_major_formatter(FormatStrFormatter('%.1f'))
-        fig_1.colorbar(surf, shrink=0.2, aspect=15)
+
+        ax.xaxis.set_pane_color((1.0, 1.0, 1.0, 0.0))
+        ax.yaxis.set_pane_color((1.0, 1.0, 1.0, 0.0))
+        ax.zaxis.set_pane_color((1.0, 1.0, 1.0, 0.0))
+        # make the grid lines transparent
+        ax.xaxis._axinfo["grid"]['color'] = (1, 1, 1, 0)
+        ax.yaxis._axinfo["grid"]['color'] = (1, 1, 1, 0)
+        ax.zaxis._axinfo["grid"]['color'] = (1, 1, 1, 0)
+
+        # fig_1.colorbar(surf, shrink=0.2, aspect=2)
         plt.savefig('./weight_map_.png', bbox_inches='tight')
 
         # for i in range(len(sample_hm.shape[0])):
@@ -187,7 +199,7 @@ class DataHelper:
         x = np.arange(0, width, 1, float)
         y = np.arange(0, height, 1, float)[:, np.newaxis]
         gaus = np.exp(-((x - x0) ** 2 + (y - y0) ** 2) / (2 * sigma ** 2))
-        gaus[gaus <= 0.01] = 0
+        # gaus[gaus <= 0.01] = 0
         return gaus
 
     def calc_NME_over_batch(self, anno_GTs, pr_hms, ds_name):

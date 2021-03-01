@@ -196,7 +196,9 @@ class CustomLoss:
             '''create high and low dif map'''
             high_dif_map = tf.where(delta_intensity >= threshold, 1.0, 0.0)
             low_dif_map = tf.where(delta_intensity < threshold, 1.0, 0.0)
-            fg_soft_low_dif_map = tf.where(delta_intensity < threshold_2, 1.0, 0.0)
+
+            low_dif_map_fg_1 = tf.where(tf.logical_and(threshold_2 <= delta_intensity, delta_intensity < threshold), 1.0, 0.0)
+            fg_soft_low_dif_mapfg_1 = tf.where(delta_intensity < threshold_2, 1.0, 0.0)
 
             '''loss bg:'''
             loss_bg_low_dif = tf.math.reduce_mean(
@@ -221,10 +223,10 @@ class CustomLoss:
 
             '''main'''
             loss_fg1_low_dif_soft = tf.math.reduce_mean(
-                weight_map_fg1 * fg_soft_low_dif_map * (tf.math.abs(hm_gt - hm_pr)))
+                weight_map_fg1 * fg_soft_low_dif_mapfg_1 * (tf.math.abs(hm_gt - hm_pr)))
 
             loss_fg1_low_dif = tf.math.reduce_mean(
-                weight_map_fg1 * low_dif_map *
+                weight_map_fg1 * low_dif_map_fg_1 *
                 (LearningConfig.Loss_fg_k * tf.math.log(tf.math.abs(hm_gt - hm_pr) + 1)
                  + threshold_2 - LearningConfig.Loss_fg_k * ln(1 + threshold_2)))
 
