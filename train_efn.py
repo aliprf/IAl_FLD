@@ -59,8 +59,8 @@ class TrainEfn:
     def train(self, arch, weight_path):
         """"""
         '''create loss'''
-        c_loss = CustomLoss(dataset_name=self.dataset_name, number_of_landmark=self.num_landmark, theta_0=0.3,
-                            theta_1=0.9, omega_bg=1, omega_fg2=50, omega_fg1=80)
+        c_loss = CustomLoss(dataset_name=self.dataset_name, number_of_landmark=self.num_landmark, theta_0=0.5,
+                            theta_1=0.9, omega_bg=1, omega_fg2=50, omega_fg1=100)
 
         '''create summary writer'''
         summary_writer = tf.summary.create_file_writer(
