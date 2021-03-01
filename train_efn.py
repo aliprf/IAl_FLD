@@ -185,7 +185,7 @@ class TrainEfn:
                                                               batch_size=batch_size)
             '''predict:'''
             hm_prs = model.predict_on_batch(images)  # hm_pr: 4, bs, 64, 64, 68
-            hm_prs_last_channel = np.array(hm_prs)[3, :, :, :]  # bs, 64, 64, 68
+            hm_prs_last_channel = np.array(hm_prs)[0]  # bs, 64, 64, 68
             '''calculate NME for batch'''
             bath_nme, bath_fr = dhl.calc_NME_over_batch(anno_GTs=anno_gts, pr_hms=hm_prs_last_channel,
                                                         ds_name=self.dataset_name)
