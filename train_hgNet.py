@@ -59,8 +59,8 @@ class TrainHg:
     def train(self, arch, weight_path):
         """"""
         '''create loss'''
-        c_loss = CustomLoss(dataset_name=self.dataset_name, theta_0=0.5, theta_1=0.8, omega_bg=1, omega_fg2=80,
-                            omega_fg1=100, number_of_landmark=self.num_landmark)
+        c_loss = CustomLoss(dataset_name=self.dataset_name, theta_0=0.5, theta_1=0.9, omega_bg=1, omega_fg2=20,
+                            omega_fg1=40, number_of_landmark=self.num_landmark)
 
         '''create summary writer'''
         summary_writer = tf.summary.create_file_writer(
@@ -73,9 +73,9 @@ class TrainHg:
             model.load_weights(weight_path)
 
         '''LearningRate'''
-        _lr = 1e-3
+        _lr = 1e-5
         '''create optimizer'''
-        optimizer = self._get_optimizer(lr=_lr, decay=1e-5)
+        optimizer = self._get_optimizer(lr=_lr, decay=1e-7)
 
         '''create sample generator'''
         # img_train_filenames, img_val_filenames, hm_train_filenames, hm_val_filenames = self._create_generators()
@@ -197,10 +197,10 @@ class TrainHg:
         print('fr:' + str(fr))
         return nme, fr
 
-    def _get_optimizer(self, lr=1e-1, beta_1=0.9, beta_2=0.999, decay=1e-4):
-        # return tf.keras.optimizers.Adam(lr=lr, beta_1=beta_1, beta_2=beta_2, decay=decay)
+    def _get_optimizer(self, lr=1e-1, beta_1=0.9, beta_2=0.999, decay=1e-6):
+        return tf.keras.optimizers.Adam(lr=lr, beta_1=beta_1, beta_2=beta_2, decay=decay)
         # return tf.keras.optimizers.RMSprop(lr=lr, beta_1=beta_1, beta_2=beta_2, decay=decay)
-        return tf.keras.optimizers.SGD(lr=lr)
+        # return tf.keras.optimizers.SGD(lr=lr)
 
     def _create_generators(self, img_path=None, hm_path=None):
         dlp = DataHelper()
