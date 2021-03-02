@@ -59,7 +59,7 @@ class TrainHg:
     def train(self, arch, weight_path):
         """"""
         '''create loss'''
-        c_loss = CustomLoss(dataset_name=self.dataset_name, theta_0=0.5, theta_1=0.9, omega_bg=1, omega_fg2=20,
+        c_loss = CustomLoss(dataset_name=self.dataset_name, theta_0=0.4, theta_1=0.85, omega_bg=1, omega_fg2=20,
                             omega_fg1=40, number_of_landmark=self.num_landmark)
 
         '''create summary writer'''
@@ -73,9 +73,9 @@ class TrainHg:
             model.load_weights(weight_path)
 
         '''LearningRate'''
-        _lr = 1e-4
+        _lr = 1e-3
         '''create optimizer'''
-        optimizer = self._get_optimizer(lr=_lr, decay=1e-7)
+        optimizer = self._get_optimizer(lr=_lr, decay=1e-5)
 
         '''create sample generator'''
         # img_train_filenames, img_val_filenames, hm_train_filenames, hm_val_filenames = self._create_generators()
