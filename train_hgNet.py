@@ -114,9 +114,9 @@ class TrainHg:
             '''save weights'''
             save_path = './models/'
             if self.dataset_name == DatasetName.ds_cofw:
-                save_path = '/media/data2/alip/HM_WEIGHTs/cofw/efn/1_march/'
+                save_path = '/media/data2/alip/HM_WEIGHTs/cofw/hg_new/1_march/'
             elif self.dataset_name == DatasetName.ds_wflw:
-                save_path = '/media/data2/alip/HM_WEIGHTs/wflw/efn/1_march/'
+                save_path = '/media/data2/alip/HM_WEIGHTs/wflw/hg_new/1_march/'
 
             model.save(save_path + 'IAL_hg' + str(epoch) + '_' + self.dataset_name + '_nme_' + str(nme)
                        + '_fr_' + str(fr) + '.h5')
