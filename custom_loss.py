@@ -29,7 +29,7 @@ class CustomLoss:
         self.omega_fg1 = omega_fg1
 
     def intensive_aware_loss(self, hm_gt, hm_prs, anno_gt, anno_prs):
-        weight = 50
+        weight = 20
         loss_bg, loss_fg2, loss_fg1, loss_categorical = self.hm_intensive_loss_stacked(hm_gt, hm_prs)
         loss_total = weight * (loss_bg + loss_fg2 + loss_fg1) + loss_categorical
         return loss_total, loss_bg, loss_fg2, loss_fg1, loss_categorical
@@ -191,7 +191,7 @@ class CustomLoss:
 
         threshold = LearningConfig.Loss_threshold
         threshold_2 = LearningConfig.Loss_threshold_2
-        stack_weight = [1.0, 1.0, 1.0, 3.0]  # two times more than sum of the previous layers
+        stack_weight = [1.0, 1.0, 1.0, 6.0]  # two times more than sum of the previous layers
         for i, hm_pr in enumerate(hm_prs):
             '''loss categorical'''
             pr_categorical_map_bg = tf.where(hm_pr < self.theta_0, CategoricalLabels.bg, 0)
