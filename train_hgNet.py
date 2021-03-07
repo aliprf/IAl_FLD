@@ -73,7 +73,7 @@ class TrainHg:
             model.load_weights(weight_path)
 
         '''LearningRate'''
-        _lr = 1e-3
+        _lr = 5e-4
         '''create optimizer'''
         optimizer = self._get_optimizer(lr=_lr, decay=1e-5)
 
@@ -84,9 +84,9 @@ class TrainHg:
                                                                       hm_path=self.eval_annotation_path)
 
         #
-        # nme, fr = self._eval_model(model, img_val_filenames, pn_val_filenames)
-        # print('nme:' + str(nme))
-        # print('fr:' + str(fr))
+        nme, fr = self._eval_model(model, img_val_filenames, pn_val_filenames)
+        print('nme:' + str(nme))
+        print('fr:' + str(fr))
         '''create train configuration'''
         step_per_epoch = len(img_train_filenames) // LearningConfig.batch_size
 
@@ -118,7 +118,7 @@ class TrainHg:
             elif self.dataset_name == DatasetName.ds_wflw:
                 save_path = '/media/data2/alip/HM_WEIGHTs/wflw/hg_new/1_march/'
 
-            model.save(save_path + 'IAL_hg' + str(epoch) + '_' + self.dataset_name + '_nme_' + str(nme)
+            model.save(save_path + 'IAL_hr' + str(epoch) + '_' + self.dataset_name + '_nme_' + str(nme)
                        + '_fr_' + str(fr) + '.h5')
             '''calculate Learning rate'''
             # _lr = self._calc_learning_rate(iterations=epoch, step_size=10, base_lr=1e-5, max_lr=1e-2)
@@ -198,9 +198,9 @@ class TrainHg:
         return nme, fr
 
     def _get_optimizer(self, lr=1e-1, beta_1=0.9, beta_2=0.999, decay=1e-6):
-        return tf.keras.optimizers.Adam(lr=lr, beta_1=beta_1, beta_2=beta_2, decay=decay)
+        # return tf.keras.optimizers.Adam(lr=lr, beta_1=beta_1, beta_2=beta_2, decay=decay)
         # return tf.keras.optimizers.RMSprop(lr=lr, beta_1=beta_1, beta_2=beta_2, decay=decay)
-        # return tf.keras.optimizers.SGD(lr=lr)
+        return tf.keras.optimizers.SGD(lr=lr)
 
     def _create_generators(self, img_path=None, hm_path=None):
         dlp = DataHelper()

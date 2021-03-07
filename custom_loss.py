@@ -228,12 +228,12 @@ class CustomLoss:
 
             '''loss fg2'''
             loss_fg2_low_dif = tf.math.reduce_mean(
-                 weight_map_fg2 * low_dif_map * tf.math.abs(hm_gt - hm_pr))
-                # cat_loss_map * weight_map_fg2 * low_dif_map * tf.math.abs(hm_gt - hm_pr))
+                 # weight_map_fg2 * low_dif_map * tf.math.abs(hm_gt - hm_pr))
+                cat_loss_map * weight_map_fg2 * low_dif_map * tf.math.abs(hm_gt - hm_pr))
 
             loss_fg2_high_dif = tf.math.reduce_mean(
-                weight_map_fg2 * high_dif_map * (tf.math.square(hm_gt - hm_pr) + threshold ** 2))
-                # cat_loss_map * weight_map_fg2 * high_dif_map * (tf.math.square(hm_gt - hm_pr) + threshold ** 2))
+                # weight_map_fg2 * high_dif_map * (tf.math.square(hm_gt - hm_pr) + threshold ** 2))
+                cat_loss_map * weight_map_fg2 * high_dif_map * (tf.math.square(hm_gt - hm_pr) + threshold ** 2))
 
             loss_fg2 += stack_weight[i] * (loss_fg2_low_dif + loss_fg2_high_dif)
 

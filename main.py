@@ -14,10 +14,10 @@ if __name__ == '__main__':
     # dlp.depict_loss(theta_0=theta_0, theta_1=theta_1)
 
     trainer = TrainHg(dataset_name=DatasetName.ds_300W, use_augmented=True)
-    trainer = TrainHg(dataset_name=DatasetName.ds_cofw, use_augmented=True)
-    trainer = TrainHg(dataset_name=DatasetName.ds_wflw, use_augmented=True)
-    trainer.train(arch='hrnet', weight_path=None)
-    # trainer.train(arch='hgNet', weight_path='./models/last_hg.h5')
+    # trainer = TrainHg(dataset_name=DatasetName.ds_cofw, use_augmented=True)
+    # trainer = TrainHg(dataset_name=DatasetName.ds_wflw, use_augmented=True)
+    # trainer.train(arch='hrnet', weight_path=None)
+    trainer.train(arch='hgNet', weight_path='./models/last_hr.h5')
 
     '''train hourGlass'''
     # trainer = TrainHg(dataset_name=DatasetName.ds_cofw, use_augmented=True)
