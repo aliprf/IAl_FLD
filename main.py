@@ -17,7 +17,7 @@ if __name__ == '__main__':
     trainer = TrainHg(dataset_name=DatasetName.ds_cofw, use_augmented=True)
     # trainer = TrainHg(dataset_name=DatasetName.ds_wflw, use_augmented=True)
     # trainer.train(arch='hrnet', weight_path=None)
-    trainer.train(arch='hrNet', weight_path='./models/last_hr.h5')
+    trainer.train(arch='hrnet', weight_path='./models/last_hr.h5')
 
     '''train hourGlass'''
     # trainer = TrainHg(dataset_name=DatasetName.ds_cofw, use_augmented=True)
