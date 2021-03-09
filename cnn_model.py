@@ -45,14 +45,14 @@ import efficientnet.tfkeras as efn
 from hrNet import HrNet
 
 class CNNModel:
-    def get_model(self, arch, num_landmark):
+    def get_model(self, arch, num_landmark, use_inter=True):
         if arch == 'hgNet':
             hg_net = HGNet(input_shape=[InputDataSize.image_input_size, InputDataSize.image_input_size, 3],
                            num_landmark=num_landmark // 2)
             return hg_net.create_model()
         elif arch == 'hrnet':
             hrnet = HrNet(input_shape=[InputDataSize.image_input_size, InputDataSize.image_input_size, 3],
-                           num_landmark=num_landmark // 2)
+                           num_landmark=num_landmark // 2, use_inter=use_inter)
             return hrnet.create_hr_net()
 
         elif arch == 'efn':

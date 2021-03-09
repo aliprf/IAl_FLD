@@ -56,7 +56,7 @@ class TrainHg:
             self.eval_annotation_path = WflwConf.test_annotation_path + 'pose/'
 
     # @tf.function
-    def train(self, arch, weight_path):
+    def train(self, arch, weight_path, use_inter=True):
         """"""
         '''create loss'''
         c_loss = CustomLoss(dataset_name=self.dataset_name, theta_0=0.4, theta_1=0.9, omega_bg=1, omega_fg2=20,
@@ -68,7 +68,7 @@ class TrainHg:
 
         '''making models'''
         cnn = CNNModel()
-        model = cnn.get_model(arch=arch, num_landmark=self.num_landmark)
+        model = cnn.get_model(arch=arch, num_landmark=self.num_landmark, use_inter=use_inter)
         if weight_path is not None:
             model.load_weights(weight_path)
 
@@ -84,11 +84,14 @@ class TrainHg:
                                                                       hm_path=self.eval_annotation_path)
 
         #
-        nme, fr = self._eval_model(model, img_val_filenames, pn_val_filenames)
-        print('nme:' + str(nme))
-        print('fr:' + str(fr))
+        # nme, fr = self._eval_model(model, img_val_filenames, pn_val_filenames)
+        # print('nme:' + str(nme))
+        # print('fr:' + str(fr))
         '''create train configuration'''
         step_per_epoch = len(img_train_filenames) // LearningConfig.batch_size
+        gradients = None
+
+        virtual_step_per_epoch = len(img_train_filenames) // LearningConfig.virtual_batch_size
 
         for epoch in range(LearningConfig.epochs):
             img_train_filenames, hm_train_filenames = self._shuffle_data(img_train_filenames, hm_train_filenames)
@@ -101,9 +104,23 @@ class TrainHg:
                 images = tf.cast(images, tf.float32)
                 hm_gt = tf.cast(hm_gt, tf.float32)
                 '''train step'''
-                self.train_step(epoch=epoch, step=batch_index, total_steps=step_per_epoch, images=images,
-                                model=model, hm_gt=hm_gt, anno_gt=anno_gt, optimizer=optimizer,
-                                summary_writer=summary_writer, c_loss=c_loss)
+                step_gradients = self.train_step(epoch=epoch, step=batch_index, total_steps=step_per_epoch,
+                                                 images=images,
+                                                 model=model, hm_gt=hm_gt, anno_gt=anno_gt, optimizer=optimizer,
+                                                 summary_writer=summary_writer, c_loss=c_loss)
+
+                '''apply gradients'''
+                if batch_index > 0 and virtual_step_per_epoch % batch_index == 0:
+                    '''apply gradient'''
+                    optimizer.apply_gradients(zip(gradients, model.trainable_variables))
+                else:
+                    '''accumulate gradient'''
+                    if gradients is None:
+                        gradients = [self._flat_gradients(g) / LearningConfig.virtual_batch_size for g in
+                                     step_gradients]
+                    else:
+                        for i, g in enumerate(step_gradients):
+                            gradients[i] += self._flat_gradients(g) / LearningConfig.virtual_batch_size
 
             '''evaluation part'''
             nme, fr = self._eval_model(model, img_val_filenames, pn_val_filenames)
@@ -140,8 +157,10 @@ class TrainHg:
                                                                                                     )
         '''calculate gradient'''
         gradients_of_model = tape.gradient(loss_total, model.trainable_variables)
-        '''apply Gradients:'''
-        optimizer.apply_gradients(zip(gradients_of_model, model.trainable_variables))
+
+        # '''apply Gradients:'''
+        # optimizer.apply_gradients(zip(gradients_of_model, model.trainable_variables))
+        #
         '''printing loss Values: '''
         tf.print("->EPOCH: ", str(epoch), "->STEP: ", str(step) + '/' + str(total_steps), ' -> : LOSS: ', loss_total,
                  ' -> : loss_fg1: ', loss_fg1, ' -> : loss_fg2: ', loss_fg2, ' -> : loss_bg: ',
@@ -154,6 +173,16 @@ class TrainHg:
             tf.summary.scalar('loss_bg', loss_bg, step=epoch)
             tf.summary.scalar('loss_categorical', loss_categorical, step=epoch)
             # tf.summary.scalar('loss_reg', loss_reg, step=epoch)
+        return gradients_of_model
+
+    def _flat_gradients(self, grads_or_idx_slices):
+        if type(grads_or_idx_slices) == tf.IndexedSlices:
+            return tf.scatter_nd(
+                tf.expand_dims(grads_or_idx_slices.indices, 1),
+                grads_or_idx_slices.values,
+                grads_or_idx_slices.dense_shape
+            )
+        return grads_or_idx_slices
 
     def _calc_learning_rate(self, iterations, step_size, base_lr, max_lr, gamma=0.99994):
         '''reducing triangle'''

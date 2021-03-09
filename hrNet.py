@@ -23,11 +23,12 @@ import scipy.io as sio
 class HrNet:
     BN_MOMENTUM = 0.01
 
-    def __init__(self, input_shape, num_landmark):
+    def __init__(self, input_shape, num_landmark, use_inter=True):
         self.input_shape = input_shape
         self.num_landmark = num_landmark
+        self.use_inter = use_inter
 
-    def create_hr_net(self):
+    def create_hr_net(self, ):
         stage_repeat = [1, 1, 4, 3]
         residual_repeat = 4
 
@@ -94,30 +95,35 @@ class HrNet:
                                                    _inp_layer_bl4_br3=_inp_layer_bl4_br3,
                                                    _inp_layer_bl4_br4=_inp_layer_bl4_br4)
         '''fuse last layers'''
-        out_1 = self._fuse_layer_1(_inp_layer_bl2_br1=_inp_layer_bl2_br1,
-                                   _inp_layer_bl2_br2=_inp_layer_bl2_br2)
+        if self.use_inter:
+            out_1 = self._fuse_layer_1(_inp_layer_bl2_br1=_inp_layer_bl2_br1,
+                                       _inp_layer_bl2_br2=_inp_layer_bl2_br2)
 
-        out_2 = self._fuse_layers_2(_inp_layer_bl3_br1=_inp_layer_bl3_br1,
-                                    _inp_layer_bl3_br2=_inp_layer_bl3_br2,
-                                    _inp_layer_bl3_br3=_inp_layer_bl3_br3)
+            out_2 = self._fuse_layers_2(_inp_layer_bl3_br1=_inp_layer_bl3_br1,
+                                        _inp_layer_bl3_br2=_inp_layer_bl3_br2,
+                                        _inp_layer_bl3_br3=_inp_layer_bl3_br3)
 
-        out_3 = self._fuse_layers_3(_inp_layer_bl4_br1=_inp_layer_bl4_br1,
-                                    _inp_layer_bl4_br2=_inp_layer_bl4_br2,
-                                    _inp_layer_bl4_br3=_inp_layer_bl4_br3,
-                                    _inp_layer_bl4_br4=_inp_layer_bl4_br4)
+            out_3 = self._fuse_layers_3(_inp_layer_bl4_br1=_inp_layer_bl4_br1,
+                                        _inp_layer_bl4_br2=_inp_layer_bl4_br2,
+                                        _inp_layer_bl4_br3=_inp_layer_bl4_br3,
+                                        _inp_layer_bl4_br4=_inp_layer_bl4_br4)
+            out_loss_1 = Conv2D(filters=self.num_landmark, kernel_size=1, strides=1, name='out_loss_1')(out_1)
+            out_loss_2 = Conv2D(filters=self.num_landmark, kernel_size=1, strides=1, name='out_loss_2')(out_2)
+            out_loss_3 = Conv2D(filters=self.num_landmark, kernel_size=1, strides=1, name='out_loss_3')(out_3)
 
         out_4 = self._fuse_last_layers(_inp_layer_bl5_br1=_inp_layer_bl5_br1,
                                        _inp_layer_bl5_br2=_inp_layer_bl5_br2,
                                        _inp_layer_bl5_br3=_inp_layer_bl5_br3,
                                        _inp_layer_bl5_br4=_inp_layer_bl5_br4)
-        '''finish'''
-        out_loss_1 = Conv2D(filters=self.num_landmark, kernel_size=1, strides=1, name='out_loss_1')(out_1)
-        out_loss_2 = Conv2D(filters=self.num_landmark, kernel_size=1, strides=1, name='out_loss_2')(out_2)
-        out_loss_3 = Conv2D(filters=self.num_landmark, kernel_size=1, strides=1, name='out_loss_3')(out_3)
         out_loss_4 = Conv2D(filters=self.num_landmark, kernel_size=1, strides=1, name='out_loss_4')(out_4)
+        '''finish'''
 
         '''depict and creat model'''
-        revised_model = Model(inp, [out_loss_1, out_loss_2, out_loss_3, out_loss_4])
+        if self.use_inter:
+            revised_model = Model(inp, [out_loss_1, out_loss_2, out_loss_3, out_loss_4])
+        else:
+            revised_model = Model(inp, [out_loss_4])
+
         revised_model.summary()
 
         model_json = revised_model.to_json()

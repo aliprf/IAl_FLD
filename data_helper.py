@@ -266,7 +266,7 @@ class DataHelper:
         xy_points = []
         # print(heatmaps.shape) 56,56,68
         for i in range(heatmaps.shape[2]):
-            x, y = self._find_nth_biggest_avg(heatmaps[:, :, i], number_of_selected_points=3,
+            x, y = self._find_nth_biggest_avg(heatmaps[:, :, i], number_of_selected_points=2,
                                               scalar=4.0)
             x_points.append(x)
             y_points.append(y)
