@@ -156,9 +156,7 @@ class TrainHg:
         with tf.GradientTape() as tape:
             '''create annotation_predicted'''
             hm_prs = model(images, training=True)
-            print(hm_prs.shape)
-            print('hm_prs.shape')
-            print("55555555555555555555555555555555555555555555555555")
+
             '''calculate loss'''
             loss_total, loss_bg, loss_fg2, loss_fg1, loss_categorical = c_loss.intensive_aware_loss(hm_gt=hm_gt,
                                                                                                     hm_prs=hm_prs,
