@@ -54,11 +54,7 @@ class CNNModel:
         elif arch == 'hrnet':
             hrnet = HrNet(input_shape=[InputDataSize.image_input_size, InputDataSize.image_input_size, 3],
                           num_landmark=num_landmark // 2, use_inter=use_inter)
-            # return hrnet.create_hr_net()
-            print(InputDataSize.image_input_size)
-            print(InputDataSize.image_input_size)
-            print(InputDataSize.image_input_size)
-            print(InputDataSize.image_input_size)
+            return hrnet.create_hr_net()
 
         elif arch == 'efn':
             return self.create_efficientNet_b3(

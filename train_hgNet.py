@@ -111,6 +111,11 @@ class TrainHg:
                                                                 img_train_filenames=img_train_filenames,
                                                                 hm_train_filenames=hm_train_filenames)
                 '''convert to tensor'''
+                print(images.shape)
+                print(images.shape)
+                print(images.shape)
+                print(images.shape)
+                print(images.shape)
                 images = tf.cast(images, tf.float32)
                 hm_gt = tf.cast(hm_gt, tf.float32)
                 '''train step'''
