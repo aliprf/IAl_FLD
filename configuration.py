@@ -81,8 +81,8 @@ class WflwConf:
 
 
 class CofwConf:
-    Cofw_prefix_path = '/media/data3/ali/FL/new_data/cofw/'  # --> zeus
-    # Cofw_prefix_path = '/media/data2/alip/FL/new_data/cofw/'  # --> atlas
+    # Cofw_prefix_path = '/media/data3/ali/FL/new_data/cofw/'  # --> zeus
+    Cofw_prefix_path = '/media/data2/alip/FL/new_data/cofw/'  # --> atlas
     # Cofw_prefix_path = '/media/ali/data/new_data/cofw/'  # --> local
 
     augmented_train_pose = Cofw_prefix_path + 'training_set_256/augmented/pose/'
