@@ -198,6 +198,11 @@ class CustomLoss:
         pr_categorical_map_fg1 = tf.where(hm_pr >= self.theta_1, CategoricalLabels.fg_1, 0)
         pr_categorical = pr_categorical_map_bg + pr_categorical_map_fg2 + pr_categorical_map_fg1
         '''on_hot'''
+        print("=======================")
+        print(gt_categorical.shape)
+        print(pr_categorical.shape)
+        print("========================")
+        print("========================")
         pr_categorical = tf.one_hot(pr_categorical, depth=3)
         '''categorical loss'''
         cel_obj = tf.losses.CategoricalCrossentropy(reduction=tf.keras.losses.Reduction.NONE)
