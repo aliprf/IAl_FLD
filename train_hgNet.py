@@ -122,10 +122,10 @@ class TrainHg:
 
                 '''apply gradients'''
                 print(batch_index)
-                print(virtual_step_per_epoch)
-                print(batch_index % virtual_step_per_epoch)
+                print(LearningConfig.virtual_batch_size)
+                print(batch_index % LearningConfig.virtual_batch_size)
 
-                if batch_index > 0 and batch_index % virtual_step_per_epoch == 0.0:
+                if batch_index > 0 and batch_index % LearningConfig.virtual_batch_size == 0:
                     '''apply gradient'''
                     print("===============apply gradient================= ")
                     optimizer.apply_gradients(zip(gradients, model.trainable_variables))
