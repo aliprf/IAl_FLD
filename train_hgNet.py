@@ -59,7 +59,7 @@ class TrainHg:
     def train(self, arch, weight_path, use_inter=True):
         """"""
         '''create loss'''
-        c_loss = CustomLoss(dataset_name=self.dataset_name, theta_0=0.4, theta_1=0.9, omega_bg=1, omega_fg2=20,
+        c_loss = CustomLoss(dataset_name=self.dataset_name, theta_0=0.5, theta_1=0.85, omega_bg=1, omega_fg2=20,
                             omega_fg1=40, number_of_landmark=self.num_landmark)
 
         '''create summary writer'''
@@ -73,7 +73,7 @@ class TrainHg:
             model.load_weights(weight_path)
 
         '''LearningRate'''
-        _lr = 5e-4
+        _lr = 1e-4
         '''create optimizer'''
         optimizer = self._get_optimizer(lr=_lr, decay=1e-5)
 
@@ -92,8 +92,18 @@ class TrainHg:
         gradients = None
 
         virtual_step_per_epoch = len(img_train_filenames) // LearningConfig.virtual_batch_size
-
+        has_updated_lr_30 = False
+        has_updated_lr_60 = False
         for epoch in range(LearningConfig.epochs):
+            if epoch > 30 and has_updated_lr_30 is False:
+                _lr = 1e-5
+                optimizer = self._get_optimizer(lr=_lr, decay=1e-5)
+                has_updated_lr_30 = True
+            if epoch > 60 and has_updated_lr_60 is False:
+                _lr = 1e-6
+                optimizer = self._get_optimizer(lr=_lr, decay=1e-5)
+                has_updated_lr_60 = True
+
             img_train_filenames, hm_train_filenames = self._shuffle_data(img_train_filenames, hm_train_filenames)
             for batch_index in range(step_per_epoch):
                 '''load annotation and images'''
@@ -107,7 +117,7 @@ class TrainHg:
                 step_gradients = self.train_step(epoch=epoch, step=batch_index, total_steps=step_per_epoch,
                                                  images=images,
                                                  model=model, hm_gt=hm_gt, anno_gt=anno_gt, optimizer=optimizer,
-                                                 summary_writer=summary_writer, c_loss=c_loss)
+                                                 summary_writer=summary_writer, c_loss=c_loss, use_inter=use_inter)
 
                 '''apply gradients'''
                 if batch_index > 0 and virtual_step_per_epoch % batch_index == 0:
@@ -141,17 +151,18 @@ class TrainHg:
             # _lr = self._calc_learning_rate(iterations=epoch, step_size=10, base_lr=1e-5, max_lr=1e-2)
             # optimizer = self._get_optimizer(lr=_lr)
 
-    def train_step(self, epoch, step, total_steps, images, model, hm_gt, anno_gt, optimizer, summary_writer, c_loss):
+    def train_step(self, epoch, step, total_steps, images, model, hm_gt, anno_gt,
+                   optimizer, summary_writer, c_loss, use_inter):
         with tf.GradientTape() as tape:
             '''create annotation_predicted'''
             hm_prs = model(images, training=True)
 
             '''calculate loss'''
-            # loss_total, loss_bg, loss_fg2, loss_fg1, loss_reg = c_loss.intensive_aware_loss(hm_gt=hm_gt,
             loss_total, loss_bg, loss_fg2, loss_fg1, loss_categorical = c_loss.intensive_aware_loss(hm_gt=hm_gt,
                                                                                                     hm_prs=hm_prs,
                                                                                                     anno_gt=anno_gt,
                                                                                                     anno_prs=None,
+                                                                                                    use_inter=use_inter
                                                                                                     # anno_prs=[out_pnt_0, out_pnt_1,
                                                                                                     #          out_pnt_2, out_pnt_3],
                                                                                                     )

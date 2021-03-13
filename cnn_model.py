@@ -44,6 +44,7 @@ import efficientnet.tfkeras as efn
 
 from hrNet import HrNet
 
+
 class CNNModel:
     def get_model(self, arch, num_landmark, use_inter=True):
         if arch == 'hgNet':
@@ -52,12 +53,13 @@ class CNNModel:
             return hg_net.create_model()
         elif arch == 'hrnet':
             hrnet = HrNet(input_shape=[InputDataSize.image_input_size, InputDataSize.image_input_size, 3],
-                           num_landmark=num_landmark // 2, use_inter=use_inter)
+                          num_landmark=num_landmark // 2, use_inter=use_inter)
             return hrnet.create_hr_net()
 
         elif arch == 'efn':
             return self.create_efficientNet_b3(
-                input_shape=[InputDataSize.image_input_size, InputDataSize.image_input_size, 3], num_landmark=num_landmark)
+                input_shape=[InputDataSize.image_input_size, InputDataSize.image_input_size, 3],
+                num_landmark=num_landmark)
 
     def create_efficientNet_b3(self, input_shape, num_landmark):
         initializer = tf.keras.initializers.glorot_uniform()
