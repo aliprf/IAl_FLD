@@ -121,7 +121,11 @@ class TrainHg:
                                                  summary_writer=summary_writer, c_loss=c_loss, use_inter=use_inter)
 
                 '''apply gradients'''
-                if batch_index > 0 and batch_index % virtual_step_per_epoch == 0:
+                print(batch_index)
+                print(virtual_step_per_epoch)
+                print(batch_index % virtual_step_per_epoch)
+
+                if batch_index > 0 and batch_index % virtual_step_per_epoch == 0.0:
                     '''apply gradient'''
                     print("===============apply gradient================= ")
                     optimizer.apply_gradients(zip(gradients, model.trainable_variables))
