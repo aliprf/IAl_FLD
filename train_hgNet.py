@@ -121,10 +121,6 @@ class TrainHg:
                                                  summary_writer=summary_writer, c_loss=c_loss, use_inter=use_inter)
 
                 '''apply gradients'''
-                print(batch_index)
-                print(LearningConfig.virtual_batch_size)
-                print(batch_index % LearningConfig.virtual_batch_size)
-
                 if batch_index > 0 and batch_index % LearningConfig.virtual_batch_size == 0:
                     '''apply gradient'''
                     print("===============apply gradient================= ")
