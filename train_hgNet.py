@@ -84,14 +84,14 @@ class TrainHg:
                                                                       hm_path=self.eval_annotation_path)
 
         #
-        # nme, fr = self._eval_model(model, img_val_filenames, pn_val_filenames)
-        # print('nme:' + str(nme))
-        # print('fr:' + str(fr))
+        nme, fr = self._eval_model(model, img_val_filenames, pn_val_filenames, use_inter=use_inter)
+        print('nme:' + str(nme))
+        print('fr:' + str(fr))
         '''create train configuration'''
         step_per_epoch = len(img_train_filenames) // LearningConfig.batch_size
         gradients = None
 
-        virtual_step_per_epoch = len(img_train_filenames) // LearningConfig.virtual_batch_size
+        virtual_step_per_epoch = LearningConfig.virtual_batch_size // LearningConfig.batch_size
         has_updated_lr_30 = False
         has_updated_lr_60 = False
         for epoch in range(LearningConfig.epochs):
@@ -121,7 +121,7 @@ class TrainHg:
                                                  summary_writer=summary_writer, c_loss=c_loss, use_inter=use_inter)
 
                 '''apply gradients'''
-                if batch_index > 0 and batch_index % LearningConfig.virtual_batch_size == 0:
+                if batch_index > 0 and batch_index % virtual_step_per_epoch == 0:
                     '''apply gradient'''
                     print("===============apply gradient================= ")
                     optimizer.apply_gradients(zip(gradients, model.trainable_variables))
@@ -135,7 +135,7 @@ class TrainHg:
                             gradients[i] += self._flat_gradients(g) / LearningConfig.virtual_batch_size
 
             '''evaluation part'''
-            nme, fr = self._eval_model(model, img_val_filenames, pn_val_filenames)
+            nme, fr = self._eval_model(model, img_val_filenames, pn_val_filenames, use_inter=use_inter)
             with summary_writer.as_default():
                 tf.summary.scalar('Eval-nme', nme, step=epoch)
                 tf.summary.scalar('Eval-fr', fr, step=epoch)
@@ -210,7 +210,7 @@ class TrainHg:
         print('LR is: ' + str(lr))
         return lr
 
-    def _eval_model(self, model, img_val_filenames, hm_val_filenames):
+    def _eval_model(self, model, img_val_filenames, hm_val_filenames, use_inter):
         dhl = DataHelper()
         # img_batch_eval, hm_batch_eval, pn_batch_eval = self._create_evaluation_batch(img_val_filenames,
         #                                                                              hm_val_filenames)
@@ -225,7 +225,10 @@ class TrainHg:
                                                               batch_size=batch_size)
             '''predict:'''
             hm_prs = model.predict_on_batch(images)  # hm_pr: 4, bs, 64, 64, 68
-            hm_prs_last_channel = np.array(hm_prs)[3, :, :, :]  # bs, 64, 64, 68
+            if use_inter:
+                hm_prs_last_channel = np.array(hm_prs)[3, :, :, :]  # bs, 64, 64, 68
+            else:
+                hm_prs_last_channel = np.array(hm_prs)
             '''calculate NME for batch'''
             bath_nme, bath_fr = dhl.calc_NME_over_batch(anno_GTs=anno_gts, pr_hms=hm_prs_last_channel,
                                                         ds_name=self.dataset_name)
