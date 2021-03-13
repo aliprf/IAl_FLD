@@ -111,9 +111,9 @@ class CofwConf:
 
 
 class D300WConf:
-    # w300w_prefix_path = '/media/data3/ali/FL/new_data/300W/'  # --> zeus
+    w300w_prefix_path = '/media/data3/ali/FL/new_data/300W/'  # --> zeus
     # w300w_prefix_path = '/media/data2/alip/FL/new_data/300W/'  # --> atlas
-    w300w_prefix_path = '/media/ali/data/new_data/300W/'  # --> local
+    # w300w_prefix_path = '/media/ali/data/new_data/300W/'  # --> local
 
     orig_300W_train = w300w_prefix_path + 'orig_300W_train/'
     augmented_train_pose = w300w_prefix_path + 'training_set_256/augmented/pose/'
