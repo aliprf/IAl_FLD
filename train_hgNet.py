@@ -121,18 +121,18 @@ class TrainHg:
                                                  summary_writer=summary_writer, c_loss=c_loss, use_inter=use_inter)
 
                 '''apply gradients'''
-                if batch_index > 0 and batch_index % virtual_step_per_epoch == 0:
-                    '''apply gradient'''
-                    print("===============apply gradient================= ")
-                    optimizer.apply_gradients(zip(gradients, model.trainable_variables))
-                else:
-                    '''accumulate gradient'''
-                    if gradients is None:
-                        gradients = [self._flat_gradients(g) / LearningConfig.virtual_batch_size for g in
-                                     step_gradients]
-                    else:
-                        for i, g in enumerate(step_gradients):
-                            gradients[i] += self._flat_gradients(g) / LearningConfig.virtual_batch_size
+                # if batch_index > 0 and batch_index % virtual_step_per_epoch == 0:
+                #     '''apply gradient'''
+                #     # print("===============apply gradient================= ")
+                #     optimizer.apply_gradients(zip(gradients, model.trainable_variables))
+                # else:
+                #     '''accumulate gradient'''
+                #     if gradients is None:
+                #         gradients = [self._flat_gradients(g) / LearningConfig.virtual_batch_size for g in
+                #                      step_gradients]
+                #     else:
+                #         for i, g in enumerate(step_gradients):
+                #             gradients[i] += self._flat_gradients(g) / LearningConfig.virtual_batch_size
 
             '''evaluation part'''
             nme, fr = self._eval_model(model, img_val_filenames, pn_val_filenames, use_inter=use_inter)
@@ -171,8 +171,8 @@ class TrainHg:
         '''calculate gradient'''
         gradients_of_model = tape.gradient(loss_total, model.trainable_variables)
 
-        # '''apply Gradients:'''
-        # optimizer.apply_gradients(zip(gradients_of_model, model.trainable_variables))
+        '''apply Gradients:'''
+        optimizer.apply_gradients(zip(gradients_of_model, model.trainable_variables))
         #
         '''printing loss Values: '''
         tf.print("->EPOCH: ", str(epoch), "->STEP: ", str(step) + '/' + str(total_steps), ' -> : LOSS: ', loss_total,
