@@ -73,7 +73,7 @@ class TrainHg:
             model.load_weights(weight_path)
 
         '''LearningRate'''
-        _lr = 1e-4
+        _lr = 5e-4
         '''create optimizer'''
         optimizer = self._get_optimizer(lr=_lr, decay=1e-5)
 
@@ -94,15 +94,20 @@ class TrainHg:
         virtual_step_per_epoch = LearningConfig.virtual_batch_size // LearningConfig.batch_size
         has_updated_lr_30 = False
         has_updated_lr_60 = False
+        # has_updated_lr_90 = False
         for epoch in range(LearningConfig.epochs):
             if epoch > 30 and has_updated_lr_30 is False:
-                _lr = 1e-5
+                _lr = 5e-5
                 optimizer = self._get_optimizer(lr=_lr, decay=1e-5)
                 has_updated_lr_30 = True
             if epoch > 60 and has_updated_lr_60 is False:
-                _lr = 1e-6
+                _lr = 5e-6
                 optimizer = self._get_optimizer(lr=_lr, decay=1e-5)
                 has_updated_lr_60 = True
+            # if epoch > 90 and has_updated_lr_90 is False:
+            #     _lr = 5e-7
+            #     optimizer = self._get_optimizer(lr=_lr, decay=1e-5)
+            #     has_updated_lr_90 = True
 
             img_train_filenames, hm_train_filenames = self._shuffle_data(img_train_filenames, hm_train_filenames)
             for batch_index in range(step_per_epoch):
