@@ -73,7 +73,7 @@ class TrainHg:
             model.load_weights(weight_path)
 
         '''LearningRate'''
-        _lr = 5e-3
+        _lr = 1e-3
         '''create optimizer'''
         optimizer = self._get_optimizer(lr=_lr, decay=1e-6)
 
