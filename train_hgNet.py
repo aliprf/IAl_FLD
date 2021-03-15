@@ -73,9 +73,9 @@ class TrainHg:
             model.load_weights(weight_path)
 
         '''LearningRate'''
-        _lr = 5e-4
+        _lr = 5e-3
         '''create optimizer'''
-        optimizer = self._get_optimizer(lr=_lr, decay=1e-5)
+        optimizer = self._get_optimizer(lr=_lr, decay=1e-6)
 
         '''create sample generator'''
         # img_train_filenames, img_val_filenames, hm_train_filenames, hm_val_filenames = self._create_generators()
@@ -97,11 +97,11 @@ class TrainHg:
         # has_updated_lr_90 = False
         for epoch in range(LearningConfig.epochs):
             if epoch > 30 and has_updated_lr_30 is False:
-                _lr = 5e-5
+                _lr = 0.1 * _lr
                 optimizer = self._get_optimizer(lr=_lr, decay=1e-5)
                 has_updated_lr_30 = True
             if epoch > 60 and has_updated_lr_60 is False:
-                _lr = 5e-6
+                _lr = 0.1 * _lr
                 optimizer = self._get_optimizer(lr=_lr, decay=1e-5)
                 has_updated_lr_60 = True
             # if epoch > 90 and has_updated_lr_90 is False:
@@ -248,9 +248,9 @@ class TrainHg:
         return nme, fr
 
     def _get_optimizer(self, lr=1e-1, beta_1=0.9, beta_2=0.999, decay=1e-6):
-        # return tf.keras.optimizers.Adam(lr=lr, beta_1=beta_1, beta_2=beta_2, decay=decay)
+        return tf.keras.optimizers.Adam(lr=lr, beta_1=beta_1, beta_2=beta_2, decay=decay)
         # return tf.keras.optimizers.RMSprop(lr=lr, beta_1=beta_1, beta_2=beta_2, decay=decay)
-        return tf.keras.optimizers.SGD(lr=lr)
+        # return tf.keras.optimizers.SGD(lr=lr)
 
     def _create_generators(self, img_path=None, hm_path=None):
         dlp = DataHelper()

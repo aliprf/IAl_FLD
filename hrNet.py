@@ -46,10 +46,14 @@ class HrNet:
         x_resolution_1 = Conv2D(filters=64, kernel_size=3, strides=1, padding='same', use_bias=False)(_inp_layer)
         x_resolution_1 = BatchNormalization(momentum=self.BN_MOMENTUM)(x_resolution_1)
         x_resolution_1 = ReLU()(x_resolution_1)
+        x_resolution_1 = Conv2D(filters=18, kernel_size=3, strides=1, padding='same', use_bias=False)(x_resolution_1)
+        x_resolution_1 = BatchNormalization(momentum=self.BN_MOMENTUM)(x_resolution_1)
 
         x_resolution_2 = Conv2D(filters=64 * 2, kernel_size=3, strides=2, padding='same', use_bias=False)(_inp_layer)
         x_resolution_2 = BatchNormalization(momentum=self.BN_MOMENTUM)(x_resolution_2)
         x_resolution_2 = ReLU()(x_resolution_2)
+        x_resolution_2 = Conv2D(filters=18, kernel_size=3, strides=1, padding='same', use_bias=False)(x_resolution_2)
+        x_resolution_2 = BatchNormalization(momentum=self.BN_MOMENTUM)(x_resolution_2)
 
         '''create stage two'''
         _inp_layer_bl2_br1 = x_resolution_1
@@ -139,7 +143,7 @@ class HrNet:
         x = Conv2D(filters=64, kernel_size=3, strides=2, padding='same',
                    use_bias=False)(x)
         x = BatchNormalization(momentum=self.BN_MOMENTUM)(x)
-        x = ReLU()(x)
+        # x = ReLU()(x)
         # x = Softmax(1)(x)
         return x
 
@@ -164,12 +168,12 @@ class HrNet:
         if down_sample:
             x = Conv2D(filters=filters, kernel_size=1, strides=strides, padding='same',
                        use_bias=False)(out)
-            x = BatchNormalization(momentum=self.BN_MOMENTUM)(x)
-            out = ReLU()(x)
+            out = BatchNormalization(momentum=self.BN_MOMENTUM)(x)
+            # out = ReLU()(out)
         ''''''
 
         x = Add()([residual, out])
-        x = ReLU()(x)
+        # x = ReLU()(x)
 
         return x
 
@@ -183,20 +187,20 @@ class HrNet:
 
         x = Conv2D(filters=filters, kernel_size=3, strides=strides, padding='same',
                    use_bias=False)(x)
-        x = BatchNormalization(momentum=self.BN_MOMENTUM)(x)
-        out = ReLU()(x)
+        out = BatchNormalization(momentum=self.BN_MOMENTUM)(x)
+        # out = ReLU()(x)
 
         # '''down sample:'''
         # if out.shape[-1] != residual.shape[-1]:
         x = Conv2D(filters=out.shape[-1], kernel_size=1, strides=strides, padding='same',
                    use_bias=False)(residual)
-        x = BatchNormalization(momentum=self.BN_MOMENTUM)(x)
-        residual = ReLU()(x)
+        residual = BatchNormalization(momentum=self.BN_MOMENTUM)(x)
+        # residual = ReLU()(x)
         ''''''
 
         x = Add()([residual, out])
 
-        x = ReLU()(x)
+        # x = ReLU()(x)
 
         return x
 
@@ -205,13 +209,13 @@ class HrNet:
         x_up_l1 = UpSampling2D(size=(2, 2))(_inp_layer_bl2_br2)
         x_up_l1 = Conv2D(filters=18, kernel_size=1, strides=1, padding='same', use_bias=False)(x_up_l1)
         x_up_l1 = BatchNormalization(momentum=self.BN_MOMENTUM)(x_up_l1)
-        x_up_l1 = ReLU()(x_up_l1)
+        # x_up_l1 = ReLU()(x_up_l1)
         _inp_layer_bl3_br1 = Add()([_inp_layer_bl2_br1, x_up_l1])
 
         # create 128
         x_down_2 = Conv2D(filters=18 * 2, kernel_size=1, strides=2, padding='same', use_bias=False)(_inp_layer_bl2_br1)
         x_down_2 = BatchNormalization(momentum=self.BN_MOMENTUM)(x_down_2)
-        x_down_2 = ReLU()(x_down_2)
+        # x_down_2 = ReLU()(x_down_2)
         _inp_layer_bl3_br2 = Add()([_inp_layer_bl2_br2, x_down_2])
 
         # create 64
@@ -221,12 +225,12 @@ class HrNet:
         x_down_3_0 = ReLU()(x_down_3_0)
         x_down_3_0 = Conv2D(filters=18 * 4, kernel_size=1, strides=2, padding='same', use_bias=False)(x_down_3_0)
         x_down_3_0 = BatchNormalization(momentum=self.BN_MOMENTUM)(x_down_3_0)
-        x_down_3_0 = ReLU()(x_down_3_0)
+        # x_down_3_0 = ReLU()(x_down_3_0)
 
         x_down_3_1 = Conv2D(filters=18 * 4, kernel_size=1, strides=2, padding='same', use_bias=False)(
             _inp_layer_bl2_br2)
         x_down_3_1 = BatchNormalization(momentum=self.BN_MOMENTUM)(x_down_3_1)
-        x_down_3_1 = ReLU()(x_down_3_1)
+        # x_down_3_1 = ReLU()(x_down_3_1)
 
         _inp_layer_bl3_br3 = Add()([x_down_3_0, x_down_3_1])
         return _inp_layer_bl3_br1, _inp_layer_bl3_br2, _inp_layer_bl3_br3
@@ -236,7 +240,7 @@ class HrNet:
         x_up_l1_0 = UpSampling2D(size=(2, 2))(_inp_layer_bl3_br2)
         x_up_l1_0 = Conv2D(filters=18, kernel_size=1, strides=1, padding='same', use_bias=False)(x_up_l1_0)
         x_up_l1_0 = BatchNormalization(momentum=self.BN_MOMENTUM)(x_up_l1_0)
-        x_up_l1_0 = ReLU()(x_up_l1_0)
+        # x_up_l1_0 = ReLU()(x_up_l1_0)
 
         x_up_l1_1 = UpSampling2D(size=(2, 2))(_inp_layer_bl3_br3)
         x_up_l1_1 = Conv2D(filters=18, kernel_size=1, strides=1, padding='same', use_bias=False)(x_up_l1_1)
@@ -245,19 +249,19 @@ class HrNet:
         x_up_l1_1 = UpSampling2D(size=(2, 2))(x_up_l1_1)
         x_up_l1_1 = Conv2D(filters=18, kernel_size=1, strides=1, padding='same', use_bias=False)(x_up_l1_1)
         x_up_l1_1 = BatchNormalization(momentum=self.BN_MOMENTUM)(x_up_l1_1)
-        x_up_l1_1 = ReLU()(x_up_l1_1)
+        # x_up_l1_1 = ReLU()(x_up_l1_1)
 
         _inp_layer_bl4_br1 = Add()([_inp_layer_bl3_br1, x_up_l1_0, x_up_l1_1])
 
         # create 128
         x_down_2 = Conv2D(filters=18 * 2, kernel_size=1, strides=2, padding='same', use_bias=False)(_inp_layer_bl3_br1)
         x_down_2 = BatchNormalization(momentum=self.BN_MOMENTUM)(x_down_2)
-        x_down_2 = ReLU()(x_down_2)
+        # x_down_2 = ReLU()(x_down_2)
 
         x_up_l2_0 = UpSampling2D(size=(2, 2))(_inp_layer_bl3_br3)
         x_up_l2_0 = Conv2D(filters=18 * 2, kernel_size=1, strides=1, padding='same', use_bias=False)(x_up_l2_0)
         x_up_l2_0 = BatchNormalization(momentum=self.BN_MOMENTUM)(x_up_l2_0)
-        x_up_l2_0 = ReLU()(x_up_l2_0)
+        # x_up_l2_0 = ReLU()(x_up_l2_0)
 
         _inp_layer_bl4_br2 = Add()([_inp_layer_bl3_br2, x_down_2, x_up_l2_0])
 
@@ -268,11 +272,11 @@ class HrNet:
         x_down_3_0 = ReLU()(x_down_3_0)
         x_down_3_0 = Conv2D(filters=18 * 4, kernel_size=1, strides=2, padding='same', use_bias=False)(x_down_3_0)
         x_down_3_0 = BatchNormalization(momentum=self.BN_MOMENTUM)(x_down_3_0)
-        x_down_3_0 = ReLU()(x_down_3_0)
+        # x_down_3_0 = ReLU()(x_down_3_0)
         #
         x_down_3_1 = Conv2D(filters=18 * 4, kernel_size=1, strides=2, padding='same', use_bias=False)(_inp_layer_bl3_br2)
         x_down_3_1 = BatchNormalization(momentum=self.BN_MOMENTUM)(x_down_3_1)
-        x_down_3_1 = ReLU()(x_down_3_1)
+        # x_down_3_1 = ReLU()(x_down_3_1)
         #
         _inp_layer_bl4_br3 = Add()([_inp_layer_bl3_br3, x_down_3_0, x_down_3_1])
         #######
@@ -286,7 +290,7 @@ class HrNet:
         x_down_4_0 = ReLU()(x_down_4_0)
         x_down_4_0 = Conv2D(filters=18 * 8, kernel_size=1, strides=2, padding='same', use_bias=False)(x_down_4_0)
         x_down_4_0 = BatchNormalization(momentum=self.BN_MOMENTUM)(x_down_4_0)
-        x_down_4_0 = ReLU()(x_down_4_0)
+        # x_down_4_0 = ReLU()(x_down_4_0)
         #
         x_down_4_1 = Conv2D(filters=18 * 8, kernel_size=1, strides=2, padding='same', use_bias=False)(
             _inp_layer_bl3_br2)
@@ -294,11 +298,11 @@ class HrNet:
         x_down_4_1 = ReLU()(x_down_4_1)
         x_down_4_1 = Conv2D(filters=18 * 8, kernel_size=1, strides=2, padding='same', use_bias=False)(x_down_4_1)
         x_down_4_1 = BatchNormalization(momentum=self.BN_MOMENTUM)(x_down_4_1)
-        x_down_4_1 = ReLU()(x_down_4_1)
+        # x_down_4_1 = ReLU()(x_down_4_1)
         #
         x_down_4_2 = Conv2D(filters=18 * 8, kernel_size=1, strides=2, padding='same', use_bias=False)(_inp_layer_bl3_br3)
         x_down_4_2 = BatchNormalization(momentum=self.BN_MOMENTUM)(x_down_4_2)
-        x_down_4_2 = ReLU()(x_down_4_2)
+        # x_down_4_2 = ReLU()(x_down_4_2)
 
         _inp_layer_bl4_br4 = Add()([x_down_4_0, x_down_4_1, x_down_4_2])
 
@@ -310,7 +314,7 @@ class HrNet:
         x_up_l1_0 = UpSampling2D(size=(2, 2))(_inp_layer_bl4_br2)
         x_up_l1_0 = Conv2D(filters=18, kernel_size=1, strides=1, padding='same', use_bias=False)(x_up_l1_0)
         x_up_l1_0 = BatchNormalization(momentum=self.BN_MOMENTUM)(x_up_l1_0)
-        x_up_l1_0 = ReLU()(x_up_l1_0)
+        # x_up_l1_0 = ReLU()(x_up_l1_0)
 
         x_up_l1_1 = UpSampling2D(size=(2, 2))(_inp_layer_bl4_br3)
         x_up_l1_1 = Conv2D(filters=18, kernel_size=1, strides=1, padding='same', use_bias=False)(x_up_l1_1)
@@ -319,7 +323,7 @@ class HrNet:
         x_up_l1_1 = UpSampling2D(size=(2, 2))(x_up_l1_1)
         x_up_l1_1 = Conv2D(filters=18, kernel_size=1, strides=1, padding='same', use_bias=False)(x_up_l1_1)
         x_up_l1_1 = BatchNormalization(momentum=self.BN_MOMENTUM)(x_up_l1_1)
-        x_up_l1_1 = ReLU()(x_up_l1_1)
+        # x_up_l1_1 = ReLU()(x_up_l1_1)
 
         x_up_l1_2 = UpSampling2D(size=(2, 2))(_inp_layer_bl4_br4)
         x_up_l1_2 = Conv2D(filters=18, kernel_size=1, strides=1, padding='same', use_bias=False)(x_up_l1_2)
@@ -332,7 +336,7 @@ class HrNet:
         x_up_l1_2 = UpSampling2D(size=(2, 2))(x_up_l1_2)
         x_up_l1_2 = Conv2D(filters=18, kernel_size=1, strides=1, padding='same', use_bias=False)(x_up_l1_2)
         x_up_l1_2 = BatchNormalization(momentum=self.BN_MOMENTUM)(x_up_l1_2)
-        x_up_l1_2 = ReLU()(x_up_l1_2)
+        # x_up_l1_2 = ReLU()(x_up_l1_2)
 
         _inp_layer_bl5_br1 = Add()([_inp_layer_bl4_br1, x_up_l1_0, x_up_l1_1, x_up_l1_2])
 
@@ -344,7 +348,7 @@ class HrNet:
         x_up_l2_0 = UpSampling2D(size=(2, 2))(_inp_layer_bl4_br3)
         x_up_l2_0 = Conv2D(filters=18*2, kernel_size=1, strides=1, padding='same', use_bias=False)(x_up_l2_0)
         x_up_l2_0 = BatchNormalization(momentum=self.BN_MOMENTUM)(x_up_l2_0)
-        x_up_l2_0 = ReLU()(x_up_l2_0)
+        # x_up_l2_0 = ReLU()(x_up_l2_0)
 
         x_up_l2_2 = UpSampling2D(size=(2, 2))(_inp_layer_bl4_br4)
         x_up_l2_2 = Conv2D(filters=18*2, kernel_size=1, strides=1, padding='same', use_bias=False)(x_up_l2_2)
@@ -353,7 +357,7 @@ class HrNet:
         x_up_l2_2 = UpSampling2D(size=(2, 2))(x_up_l2_2)
         x_up_l2_2 = Conv2D(filters=18*2, kernel_size=1, strides=1, padding='same', use_bias=False)(x_up_l2_2)
         x_up_l2_2 = BatchNormalization(momentum=self.BN_MOMENTUM)(x_up_l2_2)
-        x_up_l2_2 = ReLU()(x_up_l2_2)
+        # x_up_l2_2 = ReLU()(x_up_l2_2)
 
         _inp_layer_bl5_br2 = Add()([_inp_layer_bl4_br2, x_down_2, x_up_l2_0, x_up_l2_2])
 
@@ -364,17 +368,17 @@ class HrNet:
         x_down_3_0 = ReLU()(x_down_3_0)
         x_down_3_0 = Conv2D(filters=18 * 4, kernel_size=1, strides=2, padding='same', use_bias=False)(x_down_3_0)
         x_down_3_0 = BatchNormalization(momentum=self.BN_MOMENTUM)(x_down_3_0)
-        x_down_3_0 = ReLU()(x_down_3_0)
+        # x_down_3_0 = ReLU()(x_down_3_0)
 
         x_down_3_1 = Conv2D(filters=18 * 4, kernel_size=1, strides=2, padding='same', use_bias=False)(
             _inp_layer_bl4_br2)
         x_down_3_1 = BatchNormalization(momentum=self.BN_MOMENTUM)(x_down_3_1)
-        x_down_3_1 = ReLU()(x_down_3_1)
+        # x_down_3_1 = ReLU()(x_down_3_1)
 
         x_up_l3_2 = UpSampling2D(size=(2, 2))(_inp_layer_bl4_br4)
         x_up_l3_2 = Conv2D(filters=18*4, kernel_size=1, strides=1, padding='same', use_bias=False)(x_up_l3_2)
         x_up_l3_2 = BatchNormalization(momentum=self.BN_MOMENTUM)(x_up_l3_2)
-        x_up_l3_2 = ReLU()(x_up_l3_2)
+        # x_up_l3_2 = ReLU()(x_up_l3_2)
 
         _inp_layer_bl5_br3 = Add()([_inp_layer_bl4_br3, x_down_3_0, x_down_3_1, x_up_l3_2])
 
@@ -399,7 +403,7 @@ class HrNet:
         #
         x_down_4_2 = Conv2D(filters=18 * 8, kernel_size=1, strides=2, padding='same', use_bias=False)(_inp_layer_bl4_br3)
         x_down_4_2 = BatchNormalization(momentum=self.BN_MOMENTUM)(x_down_4_2)
-        x_down_4_2 = ReLU()(x_down_4_2)
+        # x_down_4_2 = ReLU()(x_down_4_2)
 
         _inp_layer_bl5_br4 = Add()([x_down_4_0, x_down_4_1, x_down_4_2, _inp_layer_bl4_br4])
 
@@ -408,8 +412,8 @@ class HrNet:
     def _fuse_last_layers(self, _inp_layer_bl5_br1, _inp_layer_bl5_br2, _inp_layer_bl5_br3, _inp_layer_bl5_br4):
         x_up_l1_0 = UpSampling2D(size=(2, 2))(_inp_layer_bl5_br2)
         x_up_l1_0 = Conv2D(filters=18, kernel_size=1, strides=1, padding='same', use_bias=False)(x_up_l1_0)
-        x_up_l1_0 = BatchNormalization(momentum=self.BN_MOMENTUM)(x_up_l1_0)
-        x_up_l1_0 = ReLU()(x_up_l1_0)
+        # x_up_l1_0 = BatchNormalization(momentum=self.BN_MOMENTUM)(x_up_l1_0)
+        # x_up_l1_0 = ReLU()(x_up_l1_0)
 
         x_up_l1_1 = UpSampling2D(size=(2, 2))(_inp_layer_bl5_br3)
         x_up_l1_1 = Conv2D(filters=18, kernel_size=1, strides=1, padding='same', use_bias=False)(x_up_l1_1)
@@ -418,7 +422,7 @@ class HrNet:
         x_up_l1_1 = UpSampling2D(size=(2, 2))(x_up_l1_1)
         x_up_l1_1 = Conv2D(filters=18, kernel_size=1, strides=1, padding='same', use_bias=False)(x_up_l1_1)
         x_up_l1_1 = BatchNormalization(momentum=self.BN_MOMENTUM)(x_up_l1_1)
-        x_up_l1_1 = ReLU()(x_up_l1_1)
+        # x_up_l1_1 = ReLU()(x_up_l1_1)
 
         x_up_l1_2 = UpSampling2D(size=(2, 2))(_inp_layer_bl5_br4)
         x_up_l1_2 = Conv2D(filters=18, kernel_size=1, strides=1, padding='same', use_bias=False)(x_up_l1_2)
@@ -431,7 +435,7 @@ class HrNet:
         x_up_l1_2 = UpSampling2D(size=(2, 2))(x_up_l1_2)
         x_up_l1_2 = Conv2D(filters=18, kernel_size=1, strides=1, padding='same', use_bias=False)(x_up_l1_2)
         x_up_l1_2 = BatchNormalization(momentum=self.BN_MOMENTUM)(x_up_l1_2)
-        x_up_l1_2 = ReLU()(x_up_l1_2)
+        # x_up_l1_2 = ReLU()(x_up_l1_2)
 
         return Concatenate()([_inp_layer_bl5_br1, x_up_l1_0, x_up_l1_1, x_up_l1_2])
 
@@ -439,7 +443,7 @@ class HrNet:
         x_up_l1_0 = UpSampling2D(size=(2, 2))(_inp_layer_bl2_br2)
         x_up_l1_0 = Conv2D(filters=18, kernel_size=1, strides=1, padding='same', use_bias=False)(x_up_l1_0)
         x_up_l1_0 = BatchNormalization(momentum=self.BN_MOMENTUM)(x_up_l1_0)
-        x_up_l1_0 = ReLU()(x_up_l1_0)
+        # x_up_l1_0 = ReLU()(x_up_l1_0)
 
         return Concatenate()([_inp_layer_bl2_br1, x_up_l1_0])
 
@@ -447,7 +451,7 @@ class HrNet:
         x_up_l1_0 = UpSampling2D(size=(2, 2))(_inp_layer_bl3_br2)
         x_up_l1_0 = Conv2D(filters=18, kernel_size=1, strides=1, padding='same', use_bias=False)(x_up_l1_0)
         x_up_l1_0 = BatchNormalization(momentum=self.BN_MOMENTUM)(x_up_l1_0)
-        x_up_l1_0 = ReLU()(x_up_l1_0)
+        # x_up_l1_0 = ReLU()(x_up_l1_0)
 
         x_up_l1_1 = UpSampling2D(size=(2, 2))(_inp_layer_bl3_br3)
         x_up_l1_1 = Conv2D(filters=18, kernel_size=1, strides=1, padding='same', use_bias=False)(x_up_l1_1)
@@ -456,7 +460,7 @@ class HrNet:
         x_up_l1_1 = UpSampling2D(size=(2, 2))(x_up_l1_1)
         x_up_l1_1 = Conv2D(filters=18, kernel_size=1, strides=1, padding='same', use_bias=False)(x_up_l1_1)
         x_up_l1_1 = BatchNormalization(momentum=self.BN_MOMENTUM)(x_up_l1_1)
-        x_up_l1_1 = ReLU()(x_up_l1_1)
+        # x_up_l1_1 = ReLU()(x_up_l1_1)
 
         return Concatenate()([_inp_layer_bl3_br1, x_up_l1_0, x_up_l1_1])
 
@@ -464,7 +468,7 @@ class HrNet:
         x_up_l1_0 = UpSampling2D(size=(2, 2))(_inp_layer_bl4_br2)
         x_up_l1_0 = Conv2D(filters=18, kernel_size=1, strides=1, padding='same', use_bias=False)(x_up_l1_0)
         x_up_l1_0 = BatchNormalization(momentum=self.BN_MOMENTUM)(x_up_l1_0)
-        x_up_l1_0 = ReLU()(x_up_l1_0)
+        # x_up_l1_0 = ReLU()(x_up_l1_0)
 
         x_up_l1_1 = UpSampling2D(size=(2, 2))(_inp_layer_bl4_br3)
         x_up_l1_1 = Conv2D(filters=18, kernel_size=1, strides=1, padding='same', use_bias=False)(x_up_l1_1)
@@ -473,7 +477,7 @@ class HrNet:
         x_up_l1_1 = UpSampling2D(size=(2, 2))(x_up_l1_1)
         x_up_l1_1 = Conv2D(filters=18, kernel_size=1, strides=1, padding='same', use_bias=False)(x_up_l1_1)
         x_up_l1_1 = BatchNormalization(momentum=self.BN_MOMENTUM)(x_up_l1_1)
-        x_up_l1_1 = ReLU()(x_up_l1_1)
+        # x_up_l1_1 = ReLU()(x_up_l1_1)
 
         x_up_l1_2 = UpSampling2D(size=(2, 2))(_inp_layer_bl4_br4)
         x_up_l1_2 = Conv2D(filters=18, kernel_size=1, strides=1, padding='same', use_bias=False)(x_up_l1_2)
@@ -486,7 +490,7 @@ class HrNet:
         x_up_l1_2 = UpSampling2D(size=(2, 2))(x_up_l1_2)
         x_up_l1_2 = Conv2D(filters=18, kernel_size=1, strides=1, padding='same', use_bias=False)(x_up_l1_2)
         x_up_l1_2 = BatchNormalization(momentum=self.BN_MOMENTUM)(x_up_l1_2)
-        x_up_l1_2 = ReLU()(x_up_l1_2)
+        # x_up_l1_2 = ReLU()(x_up_l1_2)
 
         return Concatenate()([_inp_layer_bl4_br1, x_up_l1_0, x_up_l1_1, x_up_l1_2])
 
