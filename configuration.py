@@ -15,10 +15,10 @@ class LearningConfig:
     Loss_threshold = 0.5
     Loss_threshold_2 = 0.03
 
-    virtual_batch_size = 100
+    virtual_batch_size = 200
 
     # batch_size = 3
-    batch_size = 15
+    batch_size = 10
     epochs = 1500
 
 
