@@ -85,6 +85,7 @@ class TrainHg:
 
         #
         nme, fr = self._eval_model(model, img_val_filenames, pn_val_filenames, use_inter=use_inter)
+        nme_best =nme
         print('nme:' + str(nme))
         print('fr:' + str(fr))
         '''create train configuration'''
@@ -139,8 +140,11 @@ class TrainHg:
                         for i, g in enumerate(step_gradients):
                             gradients[i] += self._flat_gradients(g) / LearningConfig.virtual_batch_size
 
-                if batch_index % 50:
+                if batch_index % 50 == 0:
                     nme, fr = self._eval_model(model, img_val_filenames, pn_val_filenames, use_inter=use_inter)
+                    if nme < nme_best:
+                        self.save_model(model, epoch, nme, fr)
+                        nme_best = nme
                     print('nme:' + str(nme))
                     print('fr:' + str(fr))
 
@@ -150,18 +154,23 @@ class TrainHg:
                 tf.summary.scalar('Eval-nme', nme, step=epoch)
                 tf.summary.scalar('Eval-fr', fr, step=epoch)
 
-            '''save weights'''
-            save_path = './models/'
-            if self.dataset_name == DatasetName.ds_cofw:
-                save_path = '/media/data2/alip/HM_WEIGHTs/cofw/hg_new/1_march/'
-            elif self.dataset_name == DatasetName.ds_wflw:
-                save_path = '/media/data2/alip/HM_WEIGHTs/wflw/hg_new/1_march/'
+            '''save model'''
+            self.save_model(model, epoch, nme, fr)
 
-            model.save(save_path + 'IAL_hr' + str(epoch) + '_' + self.dataset_name + '_nme_' + str(nme)
-                       + '_fr_' + str(fr) + '.h5')
             '''calculate Learning rate'''
             # _lr = self._calc_learning_rate(iterations=epoch, step_size=10, base_lr=1e-5, max_lr=1e-2)
             # optimizer = self._get_optimizer(lr=_lr)
+
+    def save_model(self, model, epoch, nme, fr):
+        '''save weights'''
+        save_path = './models/'
+        if self.dataset_name == DatasetName.ds_cofw:
+            save_path = '/media/data2/alip/HM_WEIGHTs/cofw/hg_new/1_march/'
+        elif self.dataset_name == DatasetName.ds_wflw:
+            save_path = '/media/data2/alip/HM_WEIGHTs/wflw/hg_new/1_march/'
+
+        model.save(save_path + 'IAL_hr' + str(epoch) + '_' + self.dataset_name + '_nme_' + str(nme)
+                   + '_fr_' + str(fr) + '.h5')
 
     def train_step(self, epoch, step, total_steps, images, model, hm_gt, anno_gt,
                    optimizer, summary_writer, c_loss, use_inter):
