@@ -73,7 +73,7 @@ class TrainHg:
             model.load_weights(weight_path)
 
         '''LearningRate'''
-        _lr = 5e-6
+        _lr = 5e-4
         '''create optimizer'''
         optimizer = self._get_optimizer(lr=_lr, decay=1e-6)
 
@@ -85,7 +85,7 @@ class TrainHg:
 
         #
         nme, fr = self._eval_model(model, img_val_filenames, pn_val_filenames, use_inter=use_inter)
-        nme_best =nme
+        nme_best = 100
         print('nme:' + str(nme))
         print('fr:' + str(fr))
         '''create train configuration'''
@@ -262,9 +262,9 @@ class TrainHg:
         return nme, fr
 
     def _get_optimizer(self, lr=1e-1, beta_1=0.9, beta_2=0.999, decay=1e-7):
-        # return tf.keras.optimizers.Adam(lr=lr, beta_1=beta_1, beta_2=beta_2, decay=decay)
+        return tf.keras.optimizers.Adam(lr=lr, beta_1=beta_1, beta_2=beta_2, decay=decay)
         # return tf.keras.optimizers.RMSprop(lr=lr, beta_1=beta_1, beta_2=beta_2, decay=decay)
-        return tf.keras.optimizers.SGD(lr=lr)
+        # return tf.keras.optimizers.SGD(lr=lr)
 
     def _create_generators(self, img_path=None, hm_path=None):
         dlp = DataHelper()
