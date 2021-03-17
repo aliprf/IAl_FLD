@@ -13,12 +13,12 @@ class DatasetType:
 class LearningConfig:
     Loss_fg_k = 5
     Loss_threshold = 0.5
-    Loss_threshold_2 = 0.03
+    Loss_threshold_2 = 0.02
 
-    virtual_batch_size = 500
+    virtual_batch_size = 50
 
     # batch_size = 3
-    batch_size = 9
+    batch_size = 10
     epochs = 1500
 
 

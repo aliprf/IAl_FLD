@@ -59,8 +59,8 @@ class TrainHg:
     def train(self, arch, weight_path, use_inter=True):
         """"""
         '''create loss'''
-        c_loss = CustomLoss(dataset_name=self.dataset_name, theta_0=0.5, theta_1=0.9, omega_bg=1, omega_fg2=50,
-                            omega_fg1=100, number_of_landmark=self.num_landmark)
+        c_loss = CustomLoss(dataset_name=self.dataset_name, theta_0=0.4, theta_1=0.85, omega_bg=1, omega_fg2=10,
+                            omega_fg1=20, number_of_landmark=self.num_landmark)
 
         '''create summary writer'''
         summary_writer = tf.summary.create_file_writer(
@@ -73,7 +73,7 @@ class TrainHg:
             model.load_weights(weight_path)
 
         '''LearningRate'''
-        _lr = 5e-5
+        _lr = 1e-4
         '''create optimizer'''
         optimizer = self._get_optimizer(lr=_lr, decay=1e-6)
 
@@ -126,18 +126,18 @@ class TrainHg:
                                                  summary_writer=summary_writer, c_loss=c_loss, use_inter=use_inter)
 
                 '''apply gradients'''
-                if batch_index > 0 and batch_index % virtual_step_per_epoch == 0:
-                    '''apply gradient'''
-                    print("===============apply gradient================= ")
-                    optimizer.apply_gradients(zip(gradients, model.trainable_variables))
-                else:
-                    '''accumulate gradient'''
-                    if gradients is None:
-                        gradients = [self._flat_gradients(g) / LearningConfig.virtual_batch_size for g in
-                                     step_gradients]
-                    else:
-                        for i, g in enumerate(step_gradients):
-                            gradients[i] += self._flat_gradients(g) / LearningConfig.virtual_batch_size
+                # if batch_index > 0 and batch_index % virtual_step_per_epoch == 0:
+                #     '''apply gradient'''
+                #     print("===============apply gradient================= ")
+                #     optimizer.apply_gradients(zip(gradients, model.trainable_variables))
+                # else:
+                #     '''accumulate gradient'''
+                #     if gradients is None:
+                #         gradients = [self._flat_gradients(g) / LearningConfig.virtual_batch_size for g in
+                #                      step_gradients]
+                #     else:
+                #         for i, g in enumerate(step_gradients):
+                #             gradients[i] += self._flat_gradients(g) / LearningConfig.virtual_batch_size
 
             '''evaluation part'''
             nme, fr = self._eval_model(model, img_val_filenames, pn_val_filenames, use_inter=use_inter)
@@ -176,8 +176,8 @@ class TrainHg:
         '''calculate gradient'''
         gradients_of_model = tape.gradient(loss_total, model.trainable_variables)
 
-        # '''apply Gradients:'''
-        # optimizer.apply_gradients(zip(gradients_of_model, model.trainable_variables))
+        '''apply Gradients:'''
+        optimizer.apply_gradients(zip(gradients_of_model, model.trainable_variables))
         #
         '''printing loss Values: '''
         tf.print("->EPOCH: ", str(epoch), "->STEP: ", str(step) + '/' + str(total_steps), ' -> : LOSS: ', loss_total,
@@ -248,9 +248,9 @@ class TrainHg:
         return nme, fr
 
     def _get_optimizer(self, lr=1e-1, beta_1=0.9, beta_2=0.999, decay=1e-7):
-        return tf.keras.optimizers.Adam(lr=lr, beta_1=beta_1, beta_2=beta_2, decay=decay)
+        # return tf.keras.optimizers.Adam(lr=lr, beta_1=beta_1, beta_2=beta_2, decay=decay)
         # return tf.keras.optimizers.RMSprop(lr=lr, beta_1=beta_1, beta_2=beta_2, decay=decay)
-        # return tf.keras.optimizers.SGD(lr=lr)
+        return tf.keras.optimizers.SGD(lr=lr)
 
     def _create_generators(self, img_path=None, hm_path=None):
         dlp = DataHelper()
