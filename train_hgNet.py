@@ -75,7 +75,7 @@ class TrainHg:
         '''LearningRate'''
         _lr = 5e-5
         '''create optimizer'''
-        optimizer = self._get_optimizer(lr=_lr, decay=1e-6)
+        optimizer = self._get_optimizer(lr=_lr, decay=1e-7)
 
         '''create sample generator'''
         # img_train_filenames, img_val_filenames, hm_train_filenames, hm_val_filenames = self._create_generators()
@@ -131,6 +131,7 @@ class TrainHg:
                     '''apply gradient'''
                     print("===============apply gradient================= ")
                     optimizer.apply_gradients(zip(gradients, model.trainable_variables))
+                    gradients = None
                 else:
                     '''accumulate gradient'''
                     if gradients is None:
@@ -235,7 +236,7 @@ class TrainHg:
         #                                                                              hm_val_filenames)
         nme_sum = 0
         fail_counter_sum = 0
-        batch_size = 5  # LearningConfig.batch_size
+        batch_size = 7  # LearningConfig.batch_size
         step_per_epoch = int(len(img_val_filenames) // (batch_size))
         for batch_index in tqdm(range(step_per_epoch)):
             images, hm_gts, anno_gts = self._get_batch_sample(batch_index=batch_index,
@@ -254,11 +255,22 @@ class TrainHg:
             nme_sum += bath_nme
             fail_counter_sum += bath_fr
 
+            images = None
+            hm_gts = None
+            hm_prs = None
+            anno_gts = None
+            hm_prs_last_channel = None
+            bath_nme = None
+            bath_fr = None
+
         '''calculate total'''
         fr = 100 * fail_counter_sum / len(img_val_filenames)
         nme = 100 * nme_sum / len(img_val_filenames)
         print('nme:' + str(nme))
         print('fr:' + str(fr))
+        '''release mem'''
+        model = None
+        ''''''
         return nme, fr
 
     def _get_optimizer(self, lr=1e-1, beta_1=0.9, beta_2=0.999, decay=1e-7):

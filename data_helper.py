@@ -209,12 +209,19 @@ class DataHelper:
         for i in range(pr_hms.shape[0]):
             pr_hm = pr_hms[i, :, :, :]
             _, _, anno_Pre = self._hm_to_points(heatmaps=pr_hm)
+
             anno_GT = anno_GTs[i]
             nme_i, norm_error = self._calculate_nme(anno_GT=anno_GT, anno_Pre=anno_Pre, ds_name=ds_name,
                                                     ds_number_of_points=pr_hm.shape[2])
+            anno_Pre = None
+            pr_hm = None
+            anno_GT = None
+
             sum_nme += nme_i
             if nme_i > fr_threshold:
                 fail_counter += 1
+        anno_GTs = None
+        pr_hms = None
         return sum_nme, fail_counter
 
     def _calculate_nme(self, anno_GT, anno_Pre, ds_name, ds_number_of_points):
@@ -289,15 +296,15 @@ class DataHelper:
             y_arr.append(index[1])
             w_arr.append(heatmap[index[0], index[1]])
         #
-        for i in range(len(x_arr)):
-            x_s += w_arr[i]*x_arr[i]
-            y_s += w_arr[i]*y_arr[i]
-            w_s += w_arr[i]
-        x = (x_s * scalar)/w_s
-        y = (y_s * scalar)/w_s
+        # for i in range(len(x_arr)):
+        #     x_s += w_arr[i]*x_arr[i]
+        #     y_s += w_arr[i]*y_arr[i]
+        #     w_s += w_arr[i]
+        # x = (x_s * scalar)/w_s
+        # y = (y_s * scalar)/w_s
 
-        # x = (0.75 * x_arr[1] + 0.25 * x_arr[0]) * scalar
-        # y = (0.75 * y_arr[1] + 0.25 * y_arr[0]) * scalar
+        x = (0.75 * x_arr[1] + 0.25 * x_arr[0]) * scalar
+        y = (0.75 * y_arr[1] + 0.25 * y_arr[0]) * scalar
 
         return y, x
     def _top_n_indexes(self, arr, n):
