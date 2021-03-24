@@ -15,7 +15,7 @@ class LearningConfig:
     Loss_threshold = 0.5
     Loss_threshold_2 = 0.02
 
-    virtual_batch_size = 100
+    virtual_batch_size = 250
 
     # batch_size = 3
     batch_size = 10
@@ -30,7 +30,7 @@ class CategoricalLabels:
     # max_1 = 5
 
     w_bg = 1
-    w_fg_2 = 5
+    w_fg_2 = 10
     w_fg_1 = 10
     # w_max_2 = 100
     # w_max_1 = 100
