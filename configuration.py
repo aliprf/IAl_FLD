@@ -18,7 +18,7 @@ class LearningConfig:
     virtual_batch_size = 250
 
     # batch_size = 3
-    batch_size = 10
+    batch_size = 6
     epochs = 1500
 
 
