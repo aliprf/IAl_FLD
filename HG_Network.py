@@ -27,11 +27,28 @@ class HGNet:
         self.num_landmark = num_landmark
         self.input_shape = input_shape
 
+    def _create_residual_block_blocks(self, input_layer, filters=256, use_bias=True):
+
+        x = Conv2D(filters//2, 1, strides=1, padding='same', kernel_initializer=self.initializer, use_bias=True)(input_layer)
+        x = BatchNormalization(momentum=0.9)(x)
+        x = ReLU()(x)
+
+        x = Conv2D(filters//2, 3, strides=1, padding='same', kernel_initializer=self.initializer, use_bias=True)(x)
+        x = BatchNormalization(momentum=0.9)(x)
+        x = ReLU()(x)
+
+        x = Conv2D(filters, 1, strides=1, padding='same', kernel_initializer=self.initializer, use_bias=True)(x)
+        x = BatchNormalization(momentum=0.9)(x)
+
+        x = Add()([input_layer, x])
+
+        out = ReLU()(x)
+        return out
+
     def _create_bottle_neck_blocks(self, input_layer, filters=256, use_bias=True):
         x = Conv2D(filters, 1, strides=1, padding='same', kernel_initializer=self.initializer, use_bias=True)(
             input_layer)
-        x = BatchNormalization(momentum=0.9)(x)
-        o_1 = ReLU()(x)
+        o_1 = BatchNormalization(momentum=0.9)(x)
 
         x = Conv2D(filters // 2, 1, strides=1, padding='same', kernel_initializer=self.initializer, use_bias=True)(o_1)
         x = BatchNormalization(momentum=0.9)(x)
@@ -43,9 +60,10 @@ class HGNet:
 
         x = Conv2D(filters, 1, strides=1, padding='same', kernel_initializer=self.initializer, use_bias=True)(x)
         x = BatchNormalization(momentum=0.9)(x)
-        x = ReLU()(x)
 
         x = Add()([o_1, x])
+
+        x = ReLU()(x)
 
         return x
 
@@ -53,7 +71,7 @@ class HGNet:
         x = Conv2D(filters=filters, kernel_size=kernel_size, strides=strides, padding='same',
                    kernel_initializer=self.initializer)(input_layer)
         x = BatchNormalization(momentum=0.9)(x)
-        x = ReLU()(x)
+        # x = ReLU()(x)
         return x
 
     def _create_block(self, inp, is_first=False, is_last=False):
@@ -78,7 +96,7 @@ class HGNet:
         x = self._create_bottle_neck_blocks(input_layer=x)
 
         x = UpSampling2D(size=(2, 2))(x)
-        # x = tf.keras.layers.ZeroPadding2D(padding=((1,0),(1,0)))(x) # if use 224
+
         x = Add()([l4_res, x])
         x = self._create_bottle_neck_blocks(input_layer=x)
 
@@ -97,20 +115,31 @@ class HGNet:
         '''final'''
         x = Conv2D(filters=256, kernel_size=1, strides=1,
                    padding='same', kernel_initializer=self.initializer)(x)
+        x = BatchNormalization(momentum=0.9)(x)
+        x = ReLU()(x)
+
         o_2_out = Conv2D(filters=256, kernel_size=1, strides=1,
                          padding='same', kernel_initializer=self.initializer)(x)
+        o_2_out = BatchNormalization(momentum=0.9)(o_2_out)
 
         if is_last:
             x = Conv2D(filters=256, kernel_size=1, strides=1,
                        padding='same', kernel_initializer=self.initializer)(x)
+            x = BatchNormalization(momentum=0.9)(x)
+            # x = ReLU()(x)
+
         out_loss_1 = Conv2D(filters=self.num_landmark, kernel_size=1, strides=1,
                             padding='same', kernel_initializer=self.initializer)(x)
+        # out_loss_1 = BatchNormalization(momentum=0.9)(out_loss_1)
+
         # x = BatchNormalization(momentum=0.9)(out_loss_1)
         # x = ReLU()(x)
 
         # out_loss_next = self._create_bottle_neck_blocks(input_layer=x)
         out_loss_next = Conv2D(filters=256, kernel_size=1, strides=1,
                                padding='same', kernel_initializer=self.initializer)(out_loss_1)
+        out_loss_next = BatchNormalization(momentum=0.9)(out_loss_next)
+
         if is_first:
             finish = Add()([o_2_out, out_loss_next])
         else:
@@ -124,10 +153,13 @@ class HGNet:
         inp = Input(shape=self.input_shape)
         '''create header for 256 --> 64'''
 
-        x = self._create_conv_layer(input_layer=inp, filters=64, kernel_size=7, strides=2)
-        x = self._create_bottle_neck_blocks(input_layer=x, filters=64)
-        x = self._create_bottle_neck_blocks(input_layer=x, filters=64)
-        x = self._create_bottle_neck_blocks(input_layer=x, filters=128)
+        x = self._create_conv_layer(input_layer=inp, filters=256, kernel_size=7, strides=2)
+        x = self._create_residual_block_blocks(input_layer=x, filters=256)
+
+        # x = self._create_bottle_neck_blocks(input_layer=x, filters=64)
+        # x = self._create_bottle_neck_blocks(input_layer=x, filters=64)
+        # x = self._create_bottle_neck_blocks(input_layer=x, filters=128)
+
         x = MaxPool2D(pool_size=2, strides=2)(x)  # 64
 
         '''main blocks'''

@@ -20,11 +20,11 @@ if __name__ == '__main__':
     # # # trainer.train(arch='hrnet', weight_path='./models/last_hr.h5', use_inter=True)
 
     '''train hourGlass'''
-    trainer = TrainHg(dataset_name=DatasetName.ds_cofw, use_augmented=True)
+    # trainer = TrainHg(dataset_name=DatasetName.ds_cofw, use_augmented=True)
     # trainer = TrainHg(dataset_name=DatasetName.ds_wflw, use_augmented=True)
-    # trainer = TrainHg(dataset_name=DatasetName.ds_300W, use_augmented=True)
-    # trainer.train(arch='hgNet', weight_path=None, use_inter=True)
-    trainer.train(arch='hgNet', weight_path='./models/last_hg.h5', use_inter=True)
+    trainer = TrainHg(dataset_name=DatasetName.ds_300W, use_augmented=True)
+    trainer.train(arch='hgNet', weight_path=None, use_inter=True)
+    # trainer.train(arch='hgNet', weight_path='./models/last_hg.h5', use_inter=True)
 
 
     '''train hourGlass'''

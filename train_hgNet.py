@@ -73,7 +73,7 @@ class TrainHg:
             model.load_weights(weight_path)
 
         '''LearningRate'''
-        _lr = 5e-3
+        _lr = 1e-2
         '''create optimizer'''
         optimizer = self._get_optimizer(lr=_lr, decay=1e-5)
 
@@ -97,11 +97,11 @@ class TrainHg:
         has_updated_lr_60 = False
         # has_updated_lr_90 = False
         for epoch in range(LearningConfig.epochs):
-            if epoch > 30 and has_updated_lr_30 is False:
+            if epoch > 10 and has_updated_lr_30 is False:
                 _lr = 0.1 * _lr
                 optimizer = self._get_optimizer(lr=_lr, decay=1e-5)
                 has_updated_lr_30 = True
-            if epoch > 60 and has_updated_lr_60 is False:
+            if epoch > 20 and has_updated_lr_60 is False:
                 _lr = 0.1 * _lr
                 optimizer = self._get_optimizer(lr=_lr, decay=1e-5)
                 has_updated_lr_60 = True

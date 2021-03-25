@@ -43,6 +43,8 @@ from keras.layers import Dense, MaxPooling2D, Conv2D, Flatten, Conv2DTranspose, 
 import efficientnet.tfkeras as efn
 
 from hrNet import HrNet
+import HourglassNet as hg
+from hg_blocks import create_hourglass_network, euclidean_loss, bottleneck_block, bottleneck_mobile
 
 
 class CNNModel:
@@ -51,6 +53,14 @@ class CNNModel:
             hg_net = HGNet(input_shape=[InputDataSize.image_input_size, InputDataSize.image_input_size, 3],
                            num_landmark=num_landmark // 2)
             return hg_net.create_model()
+
+            # return hg.create_hourglass_network(num_classes=num_landmark // 2,
+            #                                    num_stacks=4,
+            #                                    num_channels=256,
+            #                                    inres=InputDataSize.image_input_size,
+            #                                    outres=InputDataSize.hm_size,
+            #                                    bottleneck=bottleneck_block)
+
         elif arch == 'hrnet':
             hrnet = HrNet(input_shape=[InputDataSize.image_input_size, InputDataSize.image_input_size, 3],
                           num_landmark=num_landmark // 2, use_inter=use_inter)
