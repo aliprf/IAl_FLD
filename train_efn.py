@@ -133,7 +133,7 @@ class TrainEfn:
             hm_pr, anno_pr = model(images, training=True)
             '''calculate loss'''
             loss_total, loss_total_hm, loss_reg, regularization, loss_bg, loss_fg2, loss_fg1, loss_categorical = \
-                c_loss.intensive_aware_loss_with_reg(hm_gt=hm_gt, hm_pr=hm_pr, anno_gt=anno_gt, anno_pr=anno_pr)
+                c_loss.intensity_aware_loss_with_reg(hm_gt=hm_gt, hm_pr=hm_pr, anno_gt=anno_gt, anno_pr=anno_pr)
         '''calculate gradient'''
         gradients_of_model = tape.gradient(loss_total, model.trainable_variables)
         '''apply Gradients:'''

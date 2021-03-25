@@ -28,7 +28,7 @@ class CustomLoss:
         self.omega_fg2 = omega_fg2
         self.omega_fg1 = omega_fg1
 
-    def intensive_aware_loss(self, hm_gt, hm_prs, anno_gt, anno_prs, use_inter):
+    def intensity_aware_loss(self, hm_gt, hm_prs, anno_gt, anno_prs, use_inter):
         weight = 20
         if use_inter:
             loss_bg, loss_fg2, loss_fg1, loss_categorical = self.hm_intensive_loss_stacked(hm_gt, hm_prs)
@@ -38,7 +38,7 @@ class CustomLoss:
         loss_total = weight * (loss_bg + loss_fg2 + loss_fg1) + 1.0 * loss_categorical
         return loss_total, loss_bg, loss_fg2, loss_fg1, loss_categorical
 
-    def intensive_aware_loss_with_reg(self, hm_gt, hm_pr, anno_gt, anno_pr):
+    def intensity_aware_loss_with_reg(self, hm_gt, hm_pr, anno_gt, anno_pr):
         """"""
         weight = 2
         '''hm loss'''

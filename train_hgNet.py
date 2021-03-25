@@ -180,14 +180,11 @@ class TrainHg:
             hm_prs = model(images, training=True)
 
             '''calculate loss'''
-            loss_total, loss_bg, loss_fg2, loss_fg1, loss_categorical = c_loss.intensive_aware_loss(hm_gt=hm_gt,
+            loss_total, loss_bg, loss_fg2, loss_fg1, loss_categorical = c_loss.intensity_aware_loss(hm_gt=hm_gt,
                                                                                                     hm_prs=hm_prs,
                                                                                                     anno_gt=anno_gt,
                                                                                                     anno_prs=None,
-                                                                                                    use_inter=use_inter
-                                                                                                    # anno_prs=[out_pnt_0, out_pnt_1,
-                                                                                                    #          out_pnt_2, out_pnt_3],
-                                                                                                    )
+                                                                                                    use_inter=use_inter)
         '''calculate gradient'''
         gradients_of_model = tape.gradient(loss_total, model.trainable_variables)
 
