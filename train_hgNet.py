@@ -141,14 +141,6 @@ class TrainHg:
                         for i, g in enumerate(step_gradients):
                             gradients[i] += self._flat_gradients(g) / LearningConfig.virtual_batch_size
 
-                # if batch_index % 50 == 0:
-                #     nme, fr = self._eval_model(model, img_val_filenames, pn_val_filenames, use_inter=use_inter)
-                #     if nme < nme_best:
-                #         self.save_model(model, epoch, nme, fr)
-                #         nme_best = nme
-                #     print('nme:' + str(nme))
-                #     print('fr:' + str(fr))
-
             '''evaluation part'''
             nme, fr = self._eval_model(model, img_val_filenames, pn_val_filenames, use_inter=use_inter)
             with summary_writer.as_default():

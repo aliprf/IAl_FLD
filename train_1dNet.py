@@ -90,6 +90,9 @@ class Train1DNet:
         '''create train configuration'''
         step_per_epoch = len(img_train_filenames) // LearningConfig.batch_size
 
+        gradients = None
+        virtual_step_per_epoch = LearningConfig.virtual_batch_size // LearningConfig.batch_size
+
         '''start train:'''
         for epoch in range(LearningConfig.epochs):
             img_train_filenames, hm_train_filenames = self._shuffle_data(img_train_filenames, hm_train_filenames)
@@ -103,9 +106,24 @@ class Train1DNet:
                 anno_gt = tf.cast(anno_gt, tf.float32)
                 hm_gt = tf.cast(hm_gt, tf.float32)
                 '''train step'''
-                self.train_step(epoch=epoch, step=batch_index, total_steps=step_per_epoch, images=images,
+                step_gradients = self.train_step(epoch=epoch, step=batch_index, total_steps=step_per_epoch, images=images,
                                 model=model, hm_gt=hm_gt, anno_gt=anno_gt, optimizer=optimizer,
                                 summary_writer=summary_writer, c_loss=c_loss)
+
+            '''apply gradients'''
+            if batch_index > 0 and batch_index % virtual_step_per_epoch == 0:
+                '''apply gradient'''
+                print("===============apply gradient================= ")
+                optimizer.apply_gradients(zip(gradients, model.trainable_variables))
+                gradients = None
+            else:
+                '''accumulate gradient'''
+                if gradients is None:
+                    gradients = [self._flat_gradients(g) / LearningConfig.virtual_batch_size for g in
+                                 step_gradients]
+                else:
+                    for i, g in enumerate(step_gradients):
+                        gradients[i] += self._flat_gradients(g) / LearningConfig.virtual_batch_size
 
             '''evaluating part #TODO'''
             nme, fr = self._eval_model(model, img_val_filenames, pn_val_filenames)
@@ -138,8 +156,10 @@ class Train1DNet:
                 hm_gt=hm_gt, hm_pr=hm_pr)
         '''calculate gradient'''
         gradients_of_model = tape.gradient(loss_total, model.trainable_variables)
+
         '''apply Gradients:'''
-        optimizer.apply_gradients(zip(gradients_of_model, model.trainable_variables))
+        # optimizer.apply_gradients(zip(gradients_of_model, model.trainable_variables))
+
         '''printing loss Values: '''
         tf.print("->EPOCH: ", str(epoch), "->STEP: ", str(step) + '/' + str(total_steps),
                  ' <-> : loss_total: ', loss_total,
@@ -155,8 +175,7 @@ class Train1DNet:
             tf.summary.scalar('loss_fg2', loss_fg2, step=epoch)
             tf.summary.scalar('loss_bg', loss_bg, step=epoch)
             tf.summary.scalar('loss_categorical', loss_categorical, step=epoch)
-
-            # tf.summary.scalar('loss_reg', loss_reg, step=epoch)
+        return gradients_of_model
 
     def _calc_learning_rate(self, iterations, step_size, base_lr, max_lr, gamma=0.99994):
         '''reducing triangle'''
