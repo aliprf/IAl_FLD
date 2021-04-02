@@ -110,20 +110,20 @@ class Train1DNet:
                                 model=model, hm_gt=hm_gt, anno_gt=anno_gt, optimizer=optimizer,
                                 summary_writer=summary_writer, c_loss=c_loss)
 
-            '''apply gradients'''
-            if batch_index > 0 and batch_index % virtual_step_per_epoch == 0:
-                '''apply gradient'''
-                print("===============apply gradient================= ")
-                optimizer.apply_gradients(zip(gradients, model.trainable_variables))
-                gradients = None
-            else:
-                '''accumulate gradient'''
-                if gradients is None:
-                    gradients = [self._flat_gradients(g) / LearningConfig.virtual_batch_size for g in
-                                 step_gradients]
+                '''apply gradients'''
+                if batch_index > 0 and batch_index % virtual_step_per_epoch == 0:
+                    '''apply gradient'''
+                    print("===============apply gradient================= ")
+                    optimizer.apply_gradients(zip(gradients, model.trainable_variables))
+                    gradients = None
                 else:
-                    for i, g in enumerate(step_gradients):
-                        gradients[i] += self._flat_gradients(g) / LearningConfig.virtual_batch_size
+                    '''accumulate gradient'''
+                    if gradients is None:
+                        gradients = [self._flat_gradients(g) / LearningConfig.virtual_batch_size for g in
+                                     step_gradients]
+                    else:
+                        for i, g in enumerate(step_gradients):
+                            gradients[i] += self._flat_gradients(g) / LearningConfig.virtual_batch_size
 
             '''evaluating part #TODO'''
             nme, fr = self._eval_model(model, img_val_filenames, pn_val_filenames)
