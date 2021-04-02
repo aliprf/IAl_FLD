@@ -22,8 +22,8 @@ if __name__ == '__main__':
 
     '''train 1D models'''
     # trainer = Train1DNet(dataset_name=DatasetName.ds_cofw, use_augmented=True)
-    # trainer = Train1DNet(dataset_name=DatasetName.ds_wflw, use_augmented=True)
-    trainer = Train1DNet(dataset_name=DatasetName.ds_300W, use_augmented=True)
+    trainer = Train1DNet(dataset_name=DatasetName.ds_wflw, use_augmented=True)
+    # trainer = Train1DNet(dataset_name=DatasetName.ds_300W, use_augmented=True)
     trainer.train(arch='arch_1d', weight_path=None)
 
     '''train hourGlass'''
