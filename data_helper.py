@@ -9,6 +9,7 @@ from matplotlib.ticker import LinearLocator, FormatStrFormatter
 from matplotlib import colors
 from numpy import log as ln
 import math
+import bottleneck as bn
 
 
 class DataHelper:
@@ -224,6 +225,29 @@ class DataHelper:
         pr_hms = None
         return sum_nme, fail_counter
 
+
+    def calc_NME_over_batch_1d(self, anno_GTs, pr_hms, ds_name):
+        sum_nme = 0
+        fail_counter = 0
+        fr_threshold = 0.1
+        for i in range(pr_hms.shape[0]):
+            pr_hm = pr_hms[i, :, :, :]
+            _, _, anno_Pre = self._hm_to_points_1d(heatmaps=pr_hm)
+
+            anno_GT = anno_GTs[i]
+            nme_i, norm_error = self._calculate_nme(anno_GT=anno_GT, anno_Pre=anno_Pre, ds_name=ds_name,
+                                                    ds_number_of_points=pr_hm.shape[2])
+            anno_Pre = None
+            pr_hm = None
+            anno_GT = None
+
+            sum_nme += nme_i
+            if nme_i > fr_threshold:
+                fail_counter += 1
+        anno_GTs = None
+        pr_hms = None
+        return sum_nme, fail_counter
+
     def _calculate_nme(self, anno_GT, anno_Pre, ds_name, ds_number_of_points):
         normalizing_distance = self.calculate_interoccular_distance(anno_GT=anno_GT, ds_name=ds_name)
         '''here we round all data if needed'''
@@ -281,6 +305,28 @@ class DataHelper:
             xy_points.append(y)
         return np.array(x_points), np.array(y_points), np.array(xy_points)
 
+    def _hm_to_points_1d(self, heatmaps):
+        x_points = []
+        y_points = []
+        xy_points = []
+        # print(heatmaps.shape) 64,2,68
+        for i in range(heatmaps.shape[2]):
+            x, y = self._find_nth_biggest_avg_1d(heatmaps[:, :, i], number_of_selected_points=2, scalar=4.0)
+            x_points.append(x)
+            y_points.append(y)
+            xy_points.append(x)
+            xy_points.append(y)
+        return np.array(x_points), np.array(y_points), np.array(xy_points)
+
+    def _find_nth_biggest_avg_1d(self, heatmap, number_of_selected_points, scalar):
+        x_indices = (-heatmap[:, 0]).argsort()[:number_of_selected_points]
+        y_indices = (-heatmap[:, 1]).argsort()[:number_of_selected_points]
+
+        x = (0.75 * x_indices[0] + 0.25 * x_indices[1]) * scalar
+        y = (0.75 * y_indices[0] + 0.25 * y_indices[1]) * scalar
+
+        return x, y
+
     def _find_nth_biggest_avg(self, heatmap, number_of_selected_points, scalar):
         indices = self._top_n_indexes(heatmap, number_of_selected_points)
 
@@ -307,8 +353,8 @@ class DataHelper:
         y = (0.75 * y_arr[1] + 0.25 * y_arr[0]) * scalar
 
         return y, x
+
     def _top_n_indexes(self, arr, n):
-        import bottleneck as bn
         idx = bn.argpartition(arr, arr.size - n, axis=None)[-n:]
         width = arr.shape[1]
         xxx = [divmod(i, width) for i in idx]

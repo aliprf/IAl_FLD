@@ -28,6 +28,13 @@ class CustomLoss:
         self.omega_fg2 = omega_fg2
         self.omega_fg1 = omega_fg1
 
+    def intensity_aware_loss_1d(self, hm_gt, hm_pr):
+        """"""
+        weight = 10
+        loss_bg, loss_fg2, loss_fg1, loss_categorical = self.hm_intensive_loss_1d(hm_gt, hm_pr)
+        loss_total = weight * (loss_bg + loss_fg2 + loss_fg1) + 1.0 * loss_categorical
+        return loss_total, loss_bg, loss_fg2, loss_fg1, loss_categorical
+
     def intensity_aware_loss(self, hm_gt, hm_prs, anno_gt, anno_prs, use_inter):
         weight = 20
         if use_inter:
@@ -376,3 +383,88 @@ class CustomLoss:
         top_values, top_indices = tf.nn.top_k(tf.reshape(arr, (-1,)), n)
         top_indices = tf.stack(((top_indices // shape[1]), (top_indices % shape[1])), -1)
         return top_values, top_indices
+
+    def hm_intensive_loss_1d(self, hm_gt, hm_pr):
+        weight_map_bg = tf.cast(hm_gt < self.theta_0, dtype=tf.float32) * self.omega_bg
+        weight_map_fg2 = tf.cast(tf.logical_and(hm_gt >= self.theta_0, hm_gt < self.theta_1),
+                                 dtype=tf.float32) * self.omega_fg2
+        weight_map_fg1 = tf.cast(hm_gt >= self.theta_1, dtype=tf.float32) * self.omega_fg1
+
+        gt_categorical = weight_map_fg1 / self.omega_fg1 * CategoricalLabels.fg_1 + \
+                         weight_map_fg2 / self.omega_fg2 * CategoricalLabels.fg_2 + \
+                         weight_map_bg / self.omega_bg * CategoricalLabels.bg
+        gt_categorical = tf.cast(gt_categorical, dtype=tf.int32)
+        gt_categorical = tf.one_hot(gt_categorical, depth=3)
+        gt_categorical_weight = weight_map_fg1 / self.omega_fg1 * CategoricalLabels.w_fg_1 + \
+                                weight_map_fg2 / self.omega_fg2 * CategoricalLabels.w_fg_2 + \
+                                weight_map_bg / self.omega_bg * CategoricalLabels.w_bg
+
+        # ''''''
+        threshold = LearningConfig.Loss_threshold
+        threshold_2 = LearningConfig.Loss_threshold_2
+        '''loss categorical'''
+        pr_categorical_map_bg = tf.where(hm_pr < self.theta_0, CategoricalLabels.bg, 0)
+        pr_categorical_map_fg2 = tf.where(tf.logical_and(hm_pr >= self.theta_0, hm_pr < self.theta_1),
+                                          CategoricalLabels.fg_2, 0)
+        pr_categorical_map_fg1 = tf.where(hm_pr >= self.theta_1, CategoricalLabels.fg_1, 0)
+        pr_categorical = pr_categorical_map_bg + pr_categorical_map_fg2 + pr_categorical_map_fg1
+        '''on_hot'''
+        pr_categorical = tf.one_hot(pr_categorical, depth=3)
+        '''categorical loss'''
+        cel_obj = tf.losses.CategoricalCrossentropy(reduction=tf.keras.losses.Reduction.NONE)
+        cat_loss_tensor = cel_obj(gt_categorical, pr_categorical, sample_weight=gt_categorical_weight)
+        cat_loss_map = tf.cast(cat_loss_tensor > 0.0,
+                               dtype=tf.float32)  # we use this as a 0-1 weight for regression
+        loss_categorical = tf.math.reduce_mean(cat_loss_tensor)  # the categorical loss
+
+        '''loss intensity'''
+        delta_intensity = tf.math.abs(hm_gt - hm_pr)
+        '''create high and low dif map'''
+        high_dif_map = tf.where(delta_intensity >= threshold, 1.0, 0.0)
+        low_dif_map = tf.where(delta_intensity < threshold, 1.0, 0.0)
+
+        low_dif_map_fg_1 = tf.where(tf.logical_and(threshold_2 <= delta_intensity, delta_intensity < threshold),
+                                    1.0, 0.0)
+        fg_soft_low_dif_mapfg_1 = tf.where(delta_intensity < threshold_2, 1.0, 0.0)
+
+        '''loss bg:'''
+        loss_bg_low_dif = tf.math.reduce_mean(
+            cat_loss_map * weight_map_bg * low_dif_map * 0.5 * tf.math.square(hm_gt - hm_pr))
+
+        loss_bg_high_dif = tf.math.reduce_mean(
+            cat_loss_map * weight_map_bg * high_dif_map * (tf.math.square(hm_gt - hm_pr) - 0.5 * threshold ** 2))
+
+        loss_bg = loss_bg_low_dif + loss_bg_high_dif
+
+        '''loss fg2'''
+        loss_fg2_low_dif = tf.math.reduce_mean(
+            # weight_map_fg2 * low_dif_map * tf.math.abs(hm_gt - hm_pr))
+            cat_loss_map * weight_map_fg2 * low_dif_map * tf.math.abs(hm_gt - hm_pr))
+
+        loss_fg2_high_dif = tf.math.reduce_mean(
+            # weight_map_fg2 * high_dif_map * (tf.math.square(hm_gt - hm_pr) + threshold ** 2))
+            cat_loss_map * weight_map_fg2 * high_dif_map * (tf.math.square(hm_gt - hm_pr) + threshold ** 2))
+
+        loss_fg2 = loss_fg2_low_dif + loss_fg2_high_dif
+
+        '''loss fg1'''
+        '''we DONT multiply cat_loss_map in fg_1 region: since is is very important and and we don't stop'''
+
+        '''main'''
+        loss_fg1_low_dif_soft = tf.math.reduce_mean(
+            weight_map_fg1 * fg_soft_low_dif_mapfg_1 * (tf.math.abs(hm_gt - hm_pr)))
+
+        loss_fg1_low_dif = tf.math.reduce_mean(
+            weight_map_fg1 * low_dif_map_fg_1 *
+            (LearningConfig.Loss_fg_k * tf.math.log(tf.math.abs(hm_gt - hm_pr) + 1)
+             + threshold_2 - LearningConfig.Loss_fg_k * ln(1 + threshold_2)))
+
+        loss_fg1_high_dif = tf.math.reduce_mean(
+            weight_map_fg1 * high_dif_map *
+            (tf.math.square(hm_gt - hm_pr) +
+             LearningConfig.Loss_fg_k * ln(threshold + 1)
+             + threshold_2 - LearningConfig.Loss_fg_k * ln(1 + threshold_2) - threshold ** 2))
+
+        loss_fg1 = loss_fg1_low_dif_soft + loss_fg1_low_dif + loss_fg1_high_dif
+
+        return loss_bg, loss_fg2, loss_fg1, loss_categorical

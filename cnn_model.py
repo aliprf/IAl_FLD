@@ -71,6 +71,64 @@ class CNNModel:
                 input_shape=[InputDataSize.image_input_size, InputDataSize.image_input_size, 3],
                 num_landmark=num_landmark)
 
+        elif arch == 'arch_1d':
+            return self.create_efficientNet_1d(
+                input_shape=[InputDataSize.image_input_size, InputDataSize.image_input_size, 3],
+                num_landmark=num_landmark)
+
+    def create_efficientNet_1d(self, input_shape, num_landmark):
+        eff_net = efn.EfficientNetB0(include_top=True,
+                                     weights=None,
+                                     input_tensor=None,
+                                     input_shape=input_shape,
+                                     pooling=None)
+        # eff_net = mobilenet_v2.MobileNetV2(include_top=True,
+        #                                    weights=None,
+        #                                    input_tensor=None,
+        #                                    input_shape=input_shape,
+        #                                    pooling=None)
+
+        eff_net.layers.pop()
+        # eff_net.summary()
+
+        inp = eff_net.input
+
+        # top_activation = eff_net.get_layer('out_relu').output
+        top_activation = eff_net.get_layer('top_activation').output
+
+        '''8, 8, 256'''
+        x = Conv2DTranspose(filters=64, kernel_size=(3, 3), strides=(2, 1), padding='same')(
+            top_activation)  # 16, 8, 256
+        x = BatchNormalization()(x)
+        x = ReLU()(x)
+        x = Conv2D(filters=128, kernel_size=(3, 3), strides=(1, 2), padding='same')(x)  # 16, 4, 256
+        x = BatchNormalization(momentum=0.9)(x)
+        x = ReLU()(x)
+
+        '''16, 4, 256'''
+        x = Conv2DTranspose(filters=128, kernel_size=(3, 3), strides=(2, 1), padding='same')(x)  # 32, 4, 256
+        x = BatchNormalization()(x)
+        x = ReLU()(x)
+        x = Conv2D(filters=128, kernel_size=(3, 3), strides=(1, 2), padding='same')(x)  # 32, 2, 256
+        x = BatchNormalization(momentum=0.9)(x)
+        x = ReLU()(x)
+
+        '''32, 2, 256'''
+        x = Conv2DTranspose(filters=128, kernel_size=(3, 3), strides=(2, 1), padding='same')(x)  # 64, 2, 256
+        x = BatchNormalization()(x)
+        x = ReLU()(x)
+        x = Dropout(rate=0.2)(x)
+
+        '''64, 2, 256'''
+        out_heatmap = Conv2D(num_landmark // 2, kernel_size=1, padding='same', name='out_heatmap')(x)
+        eff_net = Model(inp, [out_heatmap])
+        eff_net.summary()
+
+        model_json = eff_net.to_json()
+        with open("./model_arch/eff_net_1d.json", "w") as json_file:
+            json_file.write(model_json)
+        return eff_net
+
     def create_efficientNet_b3(self, input_shape, num_landmark):
         initializer = tf.keras.initializers.glorot_uniform()
 

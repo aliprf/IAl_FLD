@@ -11,14 +11,14 @@ class DatasetType:
 
 
 class LearningConfig:
-    Loss_fg_k = 5
+    Loss_fg_k = 10
     Loss_threshold = 0.5
     Loss_threshold_2 = 0.02
 
     virtual_batch_size = 250
 
     # batch_size = 3
-    batch_size = 7
+    batch_size = 90
     epochs = 1500
 
 
@@ -52,12 +52,14 @@ class WflwConf:
     augmented_train_pose = Wflw_prefix_path + 'training_set_256/augmented/pose/'
     augmented_train_annotation = Wflw_prefix_path + 'training_set_256/augmented/annotations/'
     augmented_train_hm = Wflw_prefix_path + 'training_set_256/augmented/hm/'
+    augmented_train_hm_1d = Wflw_prefix_path + 'training_set_256/augmented/hm_1d/'
     augmented_train_atr = Wflw_prefix_path + 'training_set_256/augmented/atrs/'
     augmented_train_image = Wflw_prefix_path + 'training_set_256/augmented/images/'
     augmented_train_tf_path = Wflw_prefix_path + 'training_set_256/augmented/tf/'
     '''     original version'''
     no_aug_train_annotation = Wflw_prefix_path + 'training_set_256/no_aug/annotations/'
     no_aug_train_hm = Wflw_prefix_path + 'training_set_256/no_aug/hm/'
+    no_aug_train_hm_1d = Wflw_prefix_path + 'training_set_256/no_aug/hm_1d/'
     no_aug_train_atr = Wflw_prefix_path + 'training_set_256/no_aug/atrs/'
     no_aug_train_pose = Wflw_prefix_path + 'training_set_256/no_aug/pose/'
     no_aug_train_image = Wflw_prefix_path + 'training_set_256/no_aug/images/'
@@ -88,6 +90,7 @@ class CofwConf:
     augmented_train_pose = Cofw_prefix_path + 'training_set_256/augmented/pose/'
     augmented_train_annotation = Cofw_prefix_path + 'training_set_256/augmented/annotations/'
     augmented_train_hm = Cofw_prefix_path + 'training_set_256/augmented/hm/'
+    augmented_train_hm_1d = Cofw_prefix_path + 'training_set_256/augmented/hm_1d/'
     augmented_train_image = Cofw_prefix_path + 'training_set_256/augmented/images/'
 
     augmented_train_tf_path = Cofw_prefix_path + 'training_set_256/augmented/tf/'
@@ -119,11 +122,13 @@ class D300WConf:
     augmented_train_pose = w300w_prefix_path + 'training_set_256/augmented/pose/'
     augmented_train_annotation = w300w_prefix_path + 'training_set_256/augmented/annotations/'
     augmented_train_hm = w300w_prefix_path + 'training_set_256/augmented/hm/'
+    augmented_train_hm_1d = w300w_prefix_path + 'training_set_256/augmented/hm_1d/'
     augmented_train_image = w300w_prefix_path + 'training_set_256/augmented/images/'
     augmented_train_tf_path = w300w_prefix_path + 'training_set_256/augmented/tf/'
 
     no_aug_train_annotation = w300w_prefix_path + 'training_set_256/no_aug/annotations/'
     no_aug_train_hm = w300w_prefix_path + 'training_set_256/no_aug/hm/'
+    no_aug_train_hm_1d = w300w_prefix_path + 'training_set_256/no_aug/hm_1d/'
     no_aug_train_pose = w300w_prefix_path + 'training_set_256/no_aug/pose/'
     no_aug_train_image = w300w_prefix_path + 'training_set_256/no_aug/images/'
     no_aug_train_tf_path = w300w_prefix_path + 'training_set_256/no_aug/tf/'
