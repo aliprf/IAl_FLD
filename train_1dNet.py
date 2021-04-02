@@ -106,9 +106,10 @@ class Train1DNet:
                 anno_gt = tf.cast(anno_gt, tf.float32)
                 hm_gt = tf.cast(hm_gt, tf.float32)
                 '''train step'''
-                step_gradients = self.train_step(epoch=epoch, step=batch_index, total_steps=step_per_epoch, images=images,
-                                model=model, hm_gt=hm_gt, anno_gt=anno_gt, optimizer=optimizer,
-                                summary_writer=summary_writer, c_loss=c_loss)
+                step_gradients = self.train_step(epoch=epoch, step=batch_index, total_steps=step_per_epoch,
+                                                 images=images,
+                                                 model=model, hm_gt=hm_gt, anno_gt=anno_gt, optimizer=optimizer,
+                                                 summary_writer=summary_writer, c_loss=c_loss)
 
                 '''apply gradients'''
                 if batch_index > 0 and batch_index % virtual_step_per_epoch == 0:
@@ -176,6 +177,15 @@ class Train1DNet:
             tf.summary.scalar('loss_bg', loss_bg, step=epoch)
             tf.summary.scalar('loss_categorical', loss_categorical, step=epoch)
         return gradients_of_model
+
+    def _flat_gradients(self, grads_or_idx_slices):
+        if type(grads_or_idx_slices) == tf.IndexedSlices:
+            return tf.scatter_nd(
+                tf.expand_dims(grads_or_idx_slices.indices, 1),
+                grads_or_idx_slices.values,
+                grads_or_idx_slices.dense_shape
+            )
+        return grads_or_idx_slices
 
     def _calc_learning_rate(self, iterations, step_size, base_lr, max_lr, gamma=0.99994):
         '''reducing triangle'''
