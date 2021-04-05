@@ -87,9 +87,9 @@ class Train1DNet:
                                                                       hm_path=self.eval_annotation_path)
 
         #
-        # nme, fr = self._eval_model(model, img_val_filenames, pn_val_filenames)
-        # print('nme:' + str(nme))
-        # print('fr:' + str(fr))
+        nme, fr = self._eval_model(model, img_val_filenames, pn_val_filenames)
+        print('nme:' + str(nme))
+        print('fr:' + str(fr))
 
         '''create train configuration'''
         step_per_epoch = len(img_train_filenames) // LearningConfig.batch_size
@@ -210,7 +210,7 @@ class Train1DNet:
         #                                                                              hm_val_filenames)
         nme_sum = 0
         fail_counter_sum = 0
-        batch_size = 10  # LearningConfig.batch_size
+        batch_size = 20  # LearningConfig.batch_size
         step_per_epoch = int(len(img_val_filenames) // (batch_size))
         for batch_index in tqdm(range(step_per_epoch)):
             images, hm_gts, anno_gts = self._get_batch_sample(batch_index=batch_index,
