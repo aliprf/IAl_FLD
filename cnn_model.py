@@ -95,25 +95,25 @@ class CNNModel:
         return model_mloss
 
     def create_efficientNet_1d(self, input_shape, num_landmark):
-        eff_net = efn.EfficientNetB0(include_top=True,
-                                     weights=None,
-                                     input_tensor=None,
-                                     input_shape=input_shape,
-                                     pooling=None)
-        # eff_net = mobilenet_v2.MobileNetV2(include_top=True,
-        #                                    weights=None,
-        #                                    input_tensor=None,
-        #                                    input_shape=input_shape,
-        #                                    pooling=None,
-        #                                    classes=num_landmark//2)
+        # eff_net = efn.EfficientNetB0(include_top=True,
+        #                              weights=None,
+        #                              input_tensor=None,
+        #                              input_shape=input_shape,
+        #                              pooling=None)
+        eff_net = mobilenet_v2.MobileNetV2(include_top=True,
+                                           weights=None,
+                                           input_tensor=None,
+                                           input_shape=input_shape,
+                                           pooling=None,
+                                           classes=num_landmark//2)
 
         eff_net.layers.pop()
         # eff_net.summary()
 
         inp = eff_net.input
 
-        # top_activation = eff_net.get_layer('out_relu').output
-        top_activation = eff_net.get_layer('top_activation').output
+        top_activation = eff_net.get_layer('out_relu').output
+        # top_activation = eff_net.get_layer('top_activation').output
 
         '''reduce filters'''
         x = Conv2D(filters=128, kernel_size=(3, 3), strides=(1, 1), padding='same')(top_activation)
