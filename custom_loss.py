@@ -386,12 +386,18 @@ class CustomLoss:
 
     def hm_intensive_loss_1d(self, hm_gt, hm_pr, multi_loss):
         hm_pr = tf.convert_to_tensor(hm_pr)
-        hm_gt = tf.expand_dims(tf.reshape(hm_gt,
-                                          [tf.shape(hm_gt)[3],
-                                           tf.shape(hm_gt)[0],
-                                           tf.shape(hm_gt)[1],
-                                           tf.shape(hm_gt)[2]])
-                               , axis=-1)
+        hm_pr = tf.squeeze(hm_pr, axis=4)
+        hm_pr = tf.reshape(hm_pr, [tf.shape(hm_pr)[1],
+                           tf.shape(hm_pr)[2],
+                           tf.shape(hm_pr)[3],
+                           tf.shape(hm_pr)[0]])
+
+        # hm_gt = tf.expand_dims(tf.reshape(hm_gt,
+        #                                   [tf.shape(hm_gt)[3],
+        #                                    tf.shape(hm_gt)[0],
+        #                                    tf.shape(hm_gt)[1],
+        #                                    tf.shape(hm_gt)[2]])
+        #                        , axis=-1)
 
         weight_map_bg = tf.cast(hm_gt < self.theta_0, dtype=tf.float32) * self.omega_bg
         weight_map_fg2 = tf.cast(tf.logical_and(hm_gt >= self.theta_0, hm_gt < self.theta_1),
@@ -447,11 +453,11 @@ class CustomLoss:
         '''loss fg2'''
         loss_fg2_low_dif = tf.math.reduce_mean(
             weight_map_fg2 * low_dif_map * tf.math.abs(hm_gt - hm_pr))
-            # cat_loss_map * weight_map_fg2 * low_dif_map * tf.math.abs(hm_gt - hm_pr))
+        # cat_loss_map * weight_map_fg2 * low_dif_map * tf.math.abs(hm_gt - hm_pr))
 
         loss_fg2_high_dif = tf.math.reduce_mean(
             weight_map_fg2 * high_dif_map * (tf.math.square(hm_gt - hm_pr) + threshold ** 2))
-            # cat_loss_map * weight_map_fg2 * high_dif_map * (tf.math.square(hm_gt - hm_pr) + threshold ** 2))
+        # cat_loss_map * weight_map_fg2 * high_dif_map * (tf.math.square(hm_gt - hm_pr) + threshold ** 2))
 
         loss_fg2 = loss_fg2_low_dif + loss_fg2_high_dif
 
@@ -478,4 +484,3 @@ class CustomLoss:
         '''graph model loss:'''
 
         return loss_bg, loss_fg2, loss_fg1, loss_categorical
-
