@@ -112,8 +112,8 @@ class CNNModel:
 
         inp = eff_net.input
 
-        top_activation = eff_net.get_layer('out_relu').output
-        # top_activation = eff_net.get_layer('top_activation').output
+        # top_activation = eff_net.get_layer('out_relu').output
+        top_activation = eff_net.get_layer('top_activation').output
 
         '''reduce filters'''
         x = Conv2D(filters=128, kernel_size=(3, 3), strides=(1, 1), padding='same')(top_activation)
