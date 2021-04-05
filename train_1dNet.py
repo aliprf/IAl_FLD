@@ -15,8 +15,9 @@ from tqdm import tqdm
 
 
 class Train1DNet:
-    def __init__(self, dataset_name, use_augmented=True):
+    def __init__(self, dataset_name, use_augmented=True, multi_loss=False):
         self.dataset_name = dataset_name
+        self.multi_loss = multi_loss
 
         if dataset_name == DatasetName.ds_300W:
             self.num_landmark = D300WConf.num_of_landmarks * 2
@@ -24,10 +25,12 @@ class Train1DNet:
                 self.img_path = D300WConf.augmented_train_image
                 self.annotation_path = D300WConf.augmented_train_annotation
                 self.hm_path = D300WConf.augmented_train_hm_1d
+                self.hm_path_2d = D300WConf.augmented_train_hm
             else:
                 self.img_path = D300WConf.no_aug_train_image
                 self.annotation_path = D300WConf.no_aug_train_annotation
                 self.hm_path = D300WConf.no_aug_train_hm_1d
+                self.hm_path_2d = D300WConf.no_aug_train_hm
             '''evaluation path:'''
             self.eval_img_path = D300WConf.test_image_path + 'challenging/'
             self.eval_annotation_path = D300WConf.test_annotation_path + 'challenging/'
@@ -37,6 +40,7 @@ class Train1DNet:
             self.img_path = CofwConf.augmented_train_image
             self.annotation_path = CofwConf.augmented_train_annotation
             self.hm_path = CofwConf.augmented_train_hm_1d
+            self.hm_path_2d = CofwConf.augmented_train_hm
             '''evaluation path:'''
             self.eval_img_path = CofwConf.test_image_path
             self.eval_annotation_path = CofwConf.test_annotation_path
@@ -47,20 +51,22 @@ class Train1DNet:
                 self.img_path = WflwConf.augmented_train_image
                 self.annotation_path = WflwConf.augmented_train_annotation
                 self.hm_path = WflwConf.augmented_train_hm_1d
+                self.hm_path_2d = WflwConf.augmented_train_hm
             else:
                 self.img_path = WflwConf.no_aug_train_image
                 self.annotation_path = WflwConf.no_aug_train_annotation
                 self.hm_path = WflwConf.no_aug_train_hm_1d
+                self.hm_path_2d = WflwConf.no_aug_train_hm
             '''evaluation path:'''
             self.eval_img_path = WflwConf.test_image_path + 'pose/'
             self.eval_annotation_path = WflwConf.test_annotation_path + 'pose/'
 
     # @tf.function
-    def train(self, arch, weight_path):
+    def train(self, arch, weight_path, old_arch):
         """"""
         '''create loss'''
         c_loss = CustomLoss(dataset_name=self.dataset_name, number_of_landmark=self.num_landmark, theta_0=0.5,
-                            theta_1=0.9, omega_bg=1, omega_fg2=50, omega_fg1=100)
+                            theta_1=0.9, omega_bg=1, omega_fg2=10, omega_fg1=20)
 
         '''create summary writer'''
         summary_writer = tf.summary.create_file_writer(
@@ -68,9 +74,7 @@ class Train1DNet:
 
         '''making models'''
         cnn = CNNModel()
-        model = cnn.get_model(arch=arch, num_landmark=self.num_landmark)
-        if weight_path is not None:
-            model.load_weights(weight_path)
+        model = cnn.get_model(arch=arch, num_landmark=self.num_landmark, weight_path=weight_path, old_arch=old_arch)
 
         '''LearningRate'''
         _lr = 1e-2
@@ -83,9 +87,9 @@ class Train1DNet:
                                                                       hm_path=self.eval_annotation_path)
 
         #
-        nme, fr = self._eval_model(model, img_val_filenames, pn_val_filenames)
-        print('nme:' + str(nme))
-        print('fr:' + str(fr))
+        # nme, fr = self._eval_model(model, img_val_filenames, pn_val_filenames)
+        # print('nme:' + str(nme))
+        # print('fr:' + str(fr))
 
         '''create train configuration'''
         step_per_epoch = len(img_train_filenames) // LearningConfig.batch_size
@@ -135,13 +139,13 @@ class Train1DNet:
             '''save weights'''
             save_path = './models/'
             if self.dataset_name == DatasetName.ds_cofw:
-                save_path = '/media/data2/alip/HM_WEIGHTs/cofw/efn_1d/1_april/'
+                save_path = '/media/data2/alip/HM_WEIGHTs/cofw/efn_1d/5_april/'
             elif self.dataset_name == DatasetName.ds_wflw:
-                save_path = '/media/data2/alip/HM_WEIGHTs/wflw/efn_1d/1_april/'
-            elif self.dataset_name == DatasetName.ds_wflw:
-                save_path = '/media/data3/ali/HM_WEIGHTs/300W/efn_1d/1_april/'
+                save_path = '/media/data2/alip/HM_WEIGHTs/wflw/efn_1d/5_april/'
+            elif self.dataset_name == DatasetName.ds_300W:
+                save_path = '/media/data3/ali/HM_WEIGHTs/300W/efn_1d/5_april/'
 
-            model.save(save_path + 'IAL_efn_1d' + str(epoch) + '_' + self.dataset_name + '_nme_' + str(nme)
+            model.save(save_path + 'IAL_mn_k-branch' + str(epoch) + '_' + self.dataset_name + '_nme_' + str(nme)
                        + '_fr_' + str(fr) + '.h5')
 
             '''calculate Learning rate'''
@@ -154,7 +158,7 @@ class Train1DNet:
             hm_pr = model(images, training=True)
             '''calculate loss'''
             loss_total, loss_bg, loss_fg2, loss_fg1, loss_categorical = c_loss.intensity_aware_loss_1d(
-                hm_gt=hm_gt, hm_pr=hm_pr)
+                hm_gt=hm_gt, hm_pr=hm_pr, multi_loss=self.multi_loss)
         '''calculate gradient'''
         gradients_of_model = tape.gradient(loss_total, model.trainable_variables)
 
@@ -214,7 +218,12 @@ class Train1DNet:
                                                               hm_train_filenames=hm_val_filenames, is_eval=True,
                                                               batch_size=batch_size)
             '''predict:'''
-            hm_prs = model.predict_on_batch(images)  # hm_pr: 4, bs, 64, 2, 68
+            if self.multi_loss:
+                hm_prs = model.predict_on_batch(images)[0]  # hm_pr: 4, bs, 64, 2, 68
+            else:
+                hm_prs = np.array(model.predict_on_batch(images))[:, :, :, :, 0] # 68, bs, 64, 2 -> bs, 64, 2, 68
+                hm_prs = hm_prs.reshape([hm_prs.shape[1], hm_prs.shape[2], hm_prs.shape[3], hm_prs.shape[0]])
+                # hm_pr: 4, bs, 64, 2, 68
             '''calculate NME for batch'''
             bath_nme, bath_fr = dhl.calc_NME_over_batch_1d(anno_GTs=anno_gts, pr_hms=hm_prs,
                                                            ds_name=self.dataset_name)

@@ -28,10 +28,10 @@ class CustomLoss:
         self.omega_fg2 = omega_fg2
         self.omega_fg1 = omega_fg1
 
-    def intensity_aware_loss_1d(self, hm_gt, hm_pr):
+    def intensity_aware_loss_1d(self, hm_gt, hm_pr, multi_loss):
         """"""
         weight = 10
-        loss_bg, loss_fg2, loss_fg1, loss_categorical = self.hm_intensive_loss_1d(hm_gt, hm_pr)
+        loss_bg, loss_fg2, loss_fg1, loss_categorical = self.hm_intensive_loss_1d(hm_gt, hm_pr, multi_loss)
         loss_total = weight * (loss_bg + loss_fg2 + loss_fg1) + 1.0 * loss_categorical
         return loss_total, loss_bg, loss_fg2, loss_fg1, loss_categorical
 
@@ -384,7 +384,15 @@ class CustomLoss:
         top_indices = tf.stack(((top_indices // shape[1]), (top_indices % shape[1])), -1)
         return top_values, top_indices
 
-    def hm_intensive_loss_1d(self, hm_gt, hm_pr):
+    def hm_intensive_loss_1d(self, hm_gt, hm_pr, multi_loss):
+        hm_pr = tf.convert_to_tensor(hm_pr)
+        hm_gt = tf.expand_dims(tf.reshape(hm_gt,
+                                          [tf.shape(hm_gt)[3],
+                                           tf.shape(hm_gt)[0],
+                                           tf.shape(hm_gt)[1],
+                                           tf.shape(hm_gt)[2]])
+                               , axis=-1)
+
         weight_map_bg = tf.cast(hm_gt < self.theta_0, dtype=tf.float32) * self.omega_bg
         weight_map_fg2 = tf.cast(tf.logical_and(hm_gt >= self.theta_0, hm_gt < self.theta_1),
                                  dtype=tf.float32) * self.omega_fg2
@@ -467,4 +475,7 @@ class CustomLoss:
 
         loss_fg1 = loss_fg1_low_dif_soft + loss_fg1_low_dif + loss_fg1_high_dif
 
+        '''graph model loss:'''
+
         return loss_bg, loss_fg2, loss_fg1, loss_categorical
+
