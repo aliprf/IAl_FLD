@@ -95,17 +95,17 @@ class CNNModel:
         return model_mloss
 
     def create_efficientNet_1d(self, input_shape, num_landmark):
-        # eff_net = efn.EfficientNetB0(include_top=True,
-        #                              weights=None,
-        #                              input_tensor=None,
-        #                              input_shape=input_shape,
-        #                              pooling=None)
-        eff_net = mobilenet_v2.MobileNetV2(include_top=True,
-                                           weights=None,
-                                           input_tensor=None,
-                                           input_shape=input_shape,
-                                           pooling=None,
-                                           classes=num_landmark//2)
+        eff_net = efn.EfficientNetB0(include_top=True,
+                                     weights=None,
+                                     input_tensor=None,
+                                     input_shape=input_shape,
+                                     pooling=None)
+        # eff_net = mobilenet_v2.MobileNetV2(include_top=True,
+        #                                    weights=None,
+        #                                    input_tensor=None,
+        #                                    input_shape=input_shape,
+        #                                    pooling=None,
+        #                                    classes=num_landmark//2)
 
         eff_net.layers.pop()
         # eff_net.summary()

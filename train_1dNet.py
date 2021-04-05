@@ -66,7 +66,7 @@ class Train1DNet:
         """"""
         '''create loss'''
         c_loss = CustomLoss(dataset_name=self.dataset_name, number_of_landmark=self.num_landmark, theta_0=0.5,
-                            theta_1=0.9, omega_bg=1, omega_fg2=10, omega_fg1=20)
+                            theta_1=0.9, omega_bg=1, omega_fg2=20, omega_fg1=40)
 
         '''create summary writer'''
         summary_writer = tf.summary.create_file_writer(
