@@ -71,16 +71,16 @@ class CNNModel:
         inp = model.input
 
         top_activation = model.get_layer('top_activation').output
-        l_8 = Conv2D(1, kernel_size=1, padding='same', name='l_8')(top_activation)
+        l_8 = Conv2D(num_landmark//2, kernel_size=1, padding='same', name='l_8')(top_activation)
 
         block6a_expand_activation = model.get_layer('block6a_expand_activation').output
-        l_16 = Conv2D(1, kernel_size=1, padding='same', name='l_16')(block6a_expand_activation)
+        l_16 = Conv2D(num_landmark//2, kernel_size=1, padding='same', name='l_16')(block6a_expand_activation)
 
         block4a_expand_activation = model.get_layer('block4a_expand_activation').output
-        l_32 = Conv2D(1, kernel_size=1, padding='same', name='l_32')(block4a_expand_activation)
+        l_32 = Conv2D(num_landmark//2, kernel_size=1, padding='same', name='l_32')(block4a_expand_activation)
 
         block3a_expand_activation = model.get_layer('block3a_expand_activation').output
-        l_64 = Conv2D(1, kernel_size=1, padding='same', name='l_64')(block3a_expand_activation)
+        l_64 = Conv2D(num_landmark//2, kernel_size=1, padding='same', name='l_64')(block3a_expand_activation)
 
         # top_activation = model.get_layer('top_activation').output
         # top_activation = model.get_layer('top_activation').output
@@ -95,6 +95,59 @@ class CNNModel:
         return model_mloss
 
     def create_efficientNet_1d(self, input_shape, num_landmark):
+        eff_net = efn.EfficientNetB0(include_top=True,
+                                     weights=None,
+                                     input_tensor=None,
+                                     input_shape=input_shape,
+                                     pooling=None)
+        # eff_net = mobilenet_v2.MobileNetV2(include_top=True,
+        #                                    weights=None,
+        #                                    input_tensor=None,
+        #                                    input_shape=input_shape,
+        #                                    pooling=None)
+
+        eff_net.layers.pop()
+        # eff_net.summary()
+
+        inp = eff_net.input
+
+        # top_activation = eff_net.get_layer('out_relu').output
+        top_activation = eff_net.get_layer('top_activation').output
+
+        '''8, 8, 256'''
+        x = Conv2DTranspose(filters=64, kernel_size=(3, 3), strides=(2, 1), padding='same')(
+            top_activation)  # 16, 8, 256
+        x = BatchNormalization()(x)
+        x = ReLU()(x)
+        x = Conv2D(filters=128, kernel_size=(3, 3), strides=(1, 2), padding='same')(x)  # 16, 4, 256
+        x = BatchNormalization(momentum=0.9)(x)
+        x = ReLU()(x)
+
+        '''16, 4, 256'''
+        x = Conv2DTranspose(filters=128, kernel_size=(3, 3), strides=(2, 1), padding='same')(x)  # 32, 4, 256
+        x = BatchNormalization()(x)
+        x = ReLU()(x)
+        x = Conv2D(filters=128, kernel_size=(3, 3), strides=(1, 2), padding='same')(x)  # 32, 2, 256
+        x = BatchNormalization(momentum=0.9)(x)
+        x = ReLU()(x)
+
+        '''32, 2, 256'''
+        x = Conv2DTranspose(filters=128, kernel_size=(3, 3), strides=(2, 1), padding='same')(x)  # 64, 2, 256
+        x = BatchNormalization()(x)
+        x = ReLU()(x)
+        x = Dropout(rate=0.2)(x)
+
+        '''64, 2, 256'''
+        out_heatmap = Conv2D(num_landmark // 2, kernel_size=1, padding='same', name='out_heatmap')(x)
+        eff_net = Model(inp, [out_heatmap])
+        eff_net.summary()
+
+        model_json = eff_net.to_json()
+        with open("./model_arch/eff_net_1d.json", "w") as json_file:
+            json_file.write(model_json)
+        return eff_net
+
+    def _create_efficientNet_1d(self, input_shape, num_landmark):
         eff_net = efn.EfficientNetB0(include_top=True,
                                      weights=None,
                                      input_tensor=None,
@@ -197,59 +250,6 @@ class CNNModel:
         '''64, 2, 256'''
         single_out_heatmap = Conv2D(1, kernel_size=1, padding='same', name=br_name + '_single_out_heatmap')(x)
         return single_out_heatmap
-
-    def _create_efficientNet_1d(self, input_shape, num_landmark):
-        eff_net = efn.EfficientNetB0(include_top=True,
-                                     weights=None,
-                                     input_tensor=None,
-                                     input_shape=input_shape,
-                                     pooling=None)
-        # eff_net = mobilenet_v2.MobileNetV2(include_top=True,
-        #                                    weights=None,
-        #                                    input_tensor=None,
-        #                                    input_shape=input_shape,
-        #                                    pooling=None)
-
-        eff_net.layers.pop()
-        # eff_net.summary()
-
-        inp = eff_net.input
-
-        # top_activation = eff_net.get_layer('out_relu').output
-        top_activation = eff_net.get_layer('top_activation').output
-
-        '''8, 8, 256'''
-        x = Conv2DTranspose(filters=64, kernel_size=(3, 3), strides=(2, 1), padding='same')(
-            top_activation)  # 16, 8, 256
-        x = BatchNormalization()(x)
-        x = ReLU()(x)
-        x = Conv2D(filters=128, kernel_size=(3, 3), strides=(1, 2), padding='same')(x)  # 16, 4, 256
-        x = BatchNormalization(momentum=0.9)(x)
-        x = ReLU()(x)
-
-        '''16, 4, 256'''
-        x = Conv2DTranspose(filters=128, kernel_size=(3, 3), strides=(2, 1), padding='same')(x)  # 32, 4, 256
-        x = BatchNormalization()(x)
-        x = ReLU()(x)
-        x = Conv2D(filters=128, kernel_size=(3, 3), strides=(1, 2), padding='same')(x)  # 32, 2, 256
-        x = BatchNormalization(momentum=0.9)(x)
-        x = ReLU()(x)
-
-        '''32, 2, 256'''
-        x = Conv2DTranspose(filters=128, kernel_size=(3, 3), strides=(2, 1), padding='same')(x)  # 64, 2, 256
-        x = BatchNormalization()(x)
-        x = ReLU()(x)
-        x = Dropout(rate=0.2)(x)
-
-        '''64, 2, 256'''
-        out_heatmap = Conv2D(num_landmark // 2, kernel_size=1, padding='same', name='out_heatmap')(x)
-        eff_net = Model(inp, [out_heatmap])
-        eff_net.summary()
-
-        model_json = eff_net.to_json()
-        with open("./model_arch/eff_net_1d.json", "w") as json_file:
-            json_file.write(model_json)
-        return eff_net
 
     def create_efficientNet_b3(self, input_shape, num_landmark):
         initializer = tf.keras.initializers.glorot_uniform()

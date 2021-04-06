@@ -8,6 +8,7 @@ import math
 from scipy.spatial import distance
 from numpy import load, save
 from numpy import log as ln
+from skimage.transform import resize
 
 
 class CustomLoss:
@@ -28,10 +29,44 @@ class CustomLoss:
         self.omega_fg2 = omega_fg2
         self.omega_fg1 = omega_fg1
 
-    def intensity_aware_loss_1d(self, hm_gt, hm_pr, multi_loss):
+    def intensity_aware_loss_1d(self, hm_gt, hm_pr, hm_gt_2d, multi_loss):
         """"""
         weight = 10
-        loss_bg, loss_fg2, loss_fg1, loss_categorical = self.hm_intensive_loss_1d(hm_gt, hm_pr, multi_loss)
+
+        if multi_loss:
+            hm_pr_8_2d = hm_pr[1]
+            hm_pr_16_2d = hm_pr[2]
+            hm_pr_32_2d = hm_pr[3]
+            hm_pr_64_2d = hm_pr[4]
+            hm_pr = hm_pr[0]
+            '''main'''
+            _loss_bg, _loss_fg2, _loss_fg1, _loss_categorical = self.hm_intensive_loss_1d(hm_gt=hm_gt, hm_pr=hm_pr)
+
+            '''8'''
+            hm_gt_2d_8 = tf.image.resize(hm_gt_2d, size=(8, 8))
+            _loss_bg_8, _loss_fg2_8, _loss_fg1_8, _loss_categorical_8 = self.hm_intensive_loss_1d(hm_gt=hm_gt_2d_8,
+                                                                                                  hm_pr=hm_pr_8_2d)
+            '''16'''
+            hm_gt_2d_16 = tf.image.resize(hm_gt_2d, size=(16, 16))
+            _loss_bg_16, _loss_fg2_16, _loss_fg1_16, _loss_categorical_16 = self.hm_intensive_loss_1d(hm_gt=hm_gt_2d_16,
+                                                                                                      hm_pr=hm_pr_16_2d)
+            '''32'''
+            hm_gt_2d_32 = tf.image.resize(hm_gt_2d, size=(32, 23))
+            _loss_bg_32, _loss_fg2_32, _loss_fg1_32, _loss_categorical_32 = self.hm_intensive_loss_1d(hm_gt=hm_gt_2d_32,
+                                                                                                      hm_pr=hm_pr_32_2d)
+            '''64'''
+            _loss_bg_64, _loss_fg2_64, _loss_fg1_64, _loss_categorical_64 = self.hm_intensive_loss_1d(hm_gt=hm_gt_2d,
+                                                                                                      hm_pr=hm_pr_64_2d)
+
+            loss_bg = 5 * _loss_bg + _loss_bg_8 + _loss_bg_16 + _loss_bg_32 + _loss_bg_64
+            loss_fg2 = 5 * _loss_fg2 + _loss_fg2_8 + _loss_fg2_16 + _loss_fg2_32 + _loss_fg2_64
+            loss_fg1 = 5 * _loss_fg1 + _loss_fg1_8 + _loss_fg1_16 + _loss_fg1_32 + _loss_fg1_64
+            loss_categorical = 5 * _loss_categorical + _loss_categorical_8 + _loss_categorical_16 + _loss_categorical_32 \
+                               + _loss_categorical_64
+        else:
+            loss_bg, loss_fg2, loss_fg1, loss_categorical = self.hm_intensive_loss_1d(hm_gt=hm_gt,
+                                                                                      hm_pr=hm_pr)
+
         loss_total = weight * (loss_bg + loss_fg2 + loss_fg1) + 1.0 * loss_categorical
         return loss_total, loss_bg, loss_fg2, loss_fg1, loss_categorical
 
@@ -384,20 +419,13 @@ class CustomLoss:
         top_indices = tf.stack(((top_indices // shape[1]), (top_indices % shape[1])), -1)
         return top_values, top_indices
 
-    def hm_intensive_loss_1d(self, hm_gt, hm_pr, multi_loss):
-        hm_pr = tf.convert_to_tensor(hm_pr)
-        hm_pr = tf.squeeze(hm_pr, axis=4)
-        hm_pr = tf.reshape(hm_pr, [tf.shape(hm_pr)[1],
-                           tf.shape(hm_pr)[2],
-                           tf.shape(hm_pr)[3],
-                           tf.shape(hm_pr)[0]])
-
-        # hm_gt = tf.expand_dims(tf.reshape(hm_gt,
-        #                                   [tf.shape(hm_gt)[3],
-        #                                    tf.shape(hm_gt)[0],
-        #                                    tf.shape(hm_gt)[1],
-        #                                    tf.shape(hm_gt)[2]])
-        #                        , axis=-1)
+    def hm_intensive_loss_1d(self, hm_gt, hm_pr):
+        # hm_pr = tf.convert_to_tensor(hm_pr)
+        # hm_pr = tf.squeeze(hm_pr, axis=4)
+        # hm_pr = tf.reshape(hm_pr, [tf.shape(hm_pr)[1],
+        #                    tf.shape(hm_pr)[2],
+        #                    tf.shape(hm_pr)[3],
+        #                    tf.shape(hm_pr)[0]])
 
         weight_map_bg = tf.cast(hm_gt < self.theta_0, dtype=tf.float32) * self.omega_bg
         weight_map_fg2 = tf.cast(tf.logical_and(hm_gt >= self.theta_0, hm_gt < self.theta_1),

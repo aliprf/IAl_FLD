@@ -87,9 +87,7 @@ class Train1DNet:
                                                                       hm_path=self.eval_annotation_path)
 
         #
-        # nme, fr = self._eval_model(model, img_val_filenames, pn_val_filenames)
-        # print('nme:' + str(nme))
-        # print('fr:' + str(fr))
+        nme, fr = self._eval_model(model, img_val_filenames, pn_val_filenames)
 
         '''create train configuration'''
         step_per_epoch = len(img_train_filenames) // LearningConfig.batch_size
@@ -102,17 +100,20 @@ class Train1DNet:
             img_train_filenames, hm_train_filenames = self._shuffle_data(img_train_filenames, hm_train_filenames)
             for batch_index in range(step_per_epoch):
                 '''load annotation and images'''
-                images, hm_gt, anno_gt = self._get_batch_sample(batch_index=batch_index,
-                                                                img_train_filenames=img_train_filenames,
-                                                                hm_train_filenames=hm_train_filenames)
+                images, hm_gt, anno_gt, hm_gt_2d = self._get_batch_sample(batch_index=batch_index,
+                                                                          img_train_filenames=img_train_filenames,
+                                                                          hm_train_filenames=hm_train_filenames)
                 '''convert to tensor'''
                 images = tf.cast(images, tf.float32)
                 anno_gt = tf.cast(anno_gt, tf.float32)
                 hm_gt = tf.cast(hm_gt, tf.float32)
+                hm_gt_2d = tf.cast(hm_gt_2d, tf.float32)
                 '''train step'''
                 step_gradients = self.train_step(epoch=epoch, step=batch_index, total_steps=step_per_epoch,
                                                  images=images,
-                                                 model=model, hm_gt=hm_gt, anno_gt=anno_gt, optimizer=optimizer,
+                                                 model=model, hm_gt=hm_gt, anno_gt=anno_gt,
+                                                 hm_gt_2d=hm_gt_2d,
+                                                 optimizer=optimizer,
                                                  summary_writer=summary_writer, c_loss=c_loss)
 
                 '''apply gradients'''
@@ -152,13 +153,14 @@ class Train1DNet:
             # _lr = self._calc_learning_rate(iterations=epoch, step_size=10, base_lr=1e-5, max_lr=1e-2)
             # optimizer = self._get_optimizer(lr=_lr)
 
-    def train_step(self, epoch, step, total_steps, images, model, hm_gt, anno_gt, optimizer, summary_writer, c_loss):
+    def train_step(self, epoch, step, total_steps, images, model, hm_gt, anno_gt, optimizer, hm_gt_2d, summary_writer,
+                   c_loss):
         with tf.GradientTape() as tape:
             '''create annotation_predicted'''
             hm_pr = model(images, training=True)
             '''calculate loss'''
             loss_total, loss_bg, loss_fg2, loss_fg1, loss_categorical = c_loss.intensity_aware_loss_1d(
-                hm_gt=hm_gt, hm_pr=hm_pr, multi_loss=self.multi_loss)
+                hm_gt=hm_gt, hm_pr=hm_pr, hm_gt_2d=hm_gt_2d, multi_loss=self.multi_loss)
         '''calculate gradient'''
         gradients_of_model = tape.gradient(loss_total, model.trainable_variables)
 
@@ -213,16 +215,18 @@ class Train1DNet:
         batch_size = 20  # LearningConfig.batch_size
         step_per_epoch = int(len(img_val_filenames) // (batch_size))
         for batch_index in tqdm(range(step_per_epoch)):
-            images, hm_gts, anno_gts = self._get_batch_sample(batch_index=batch_index,
-                                                              img_train_filenames=img_val_filenames,
-                                                              hm_train_filenames=hm_val_filenames, is_eval=True,
-                                                              batch_size=batch_size)
+            images, hm_gts, anno_gts, nothing = self._get_batch_sample(batch_index=batch_index,
+                                                                       img_train_filenames=img_val_filenames,
+                                                                       hm_train_filenames=hm_val_filenames,
+                                                                       is_eval=True,
+                                                                       batch_size=batch_size)
             '''predict:'''
             if self.multi_loss:
                 hm_prs = model.predict_on_batch(images)[0]  # hm_pr: 4, bs, 64, 2, 68
             else:
-                hm_prs = np.array(model.predict_on_batch(images))[:, :, :, :, 0] # 68, bs, 64, 2 -> bs, 64, 2, 68
-                hm_prs = hm_prs.reshape([hm_prs.shape[1], hm_prs.shape[2], hm_prs.shape[3], hm_prs.shape[0]])
+                hm_prs = model.predict_on_batch(images)
+                # hm_prs = np.array(model.predict_on_batch(images))[:, :, :, :, 0] # 68, bs, 64, 2 -> bs, 64, 2, 68
+                # hm_prs = hm_prs.reshape([hm_prs.shape[1], hm_prs.shape[2], hm_prs.shape[3], hm_prs.shape[0]])
                 # hm_pr: 4, bs, 64, 2, 68
             '''calculate NME for batch'''
             bath_nme, bath_fr = dhl.calc_NME_over_batch_1d(anno_GTs=anno_gts, pr_hms=hm_prs,
@@ -234,6 +238,7 @@ class Train1DNet:
             hm_gts = None
             hm_prs = None
             anno_gts = None
+            nothing = None
 
         '''calculate total'''
         fr = 100 * fail_counter_sum / len(img_val_filenames)
@@ -270,6 +275,7 @@ class Train1DNet:
         dhl = DataHelper()
 
         '''create img and annotations'''
+        hm_gt_2d = None
         if is_eval:
             batch_x = img_train_filenames[
                       batch_index * batch_size:(batch_index + 1) * batch_size]
@@ -289,9 +295,11 @@ class Train1DNet:
 
             img_batch = np.array([imread(self.img_path + file_name) for file_name in batch_x]) / 255.0
             hm_batch = np.array([load(self.hm_path + file_name) for file_name in batch_y])
+            if self.multi_loss:
+                hm_gt_2d = np.array([load(self.hm_path_2d + file_name) for file_name in batch_y])
             pn_batch = np.array([dhl.load_and_normalize(self.annotation_path + file_name) for file_name in batch_y])
 
-        return img_batch, hm_batch, pn_batch
+        return img_batch, hm_batch, pn_batch, hm_gt_2d
 
     def _create_evaluation_batch(self, img_eval_filenames, hm_eval_filenames):
         dhl = DataHelper()
