@@ -67,7 +67,7 @@ class CustomLoss:
             loss_bg, loss_fg2, loss_fg1, loss_categorical = self.hm_intensive_loss_1d(hm_gt=hm_gt,
                                                                                       hm_pr=hm_pr)
 
-        loss_total = weight * (loss_bg + loss_fg2 + loss_fg1) + 1.0 * loss_categorical
+        loss_total = weight * (loss_bg + loss_fg2 + loss_fg1) + 0.1 * loss_categorical
         return loss_total, loss_bg, loss_fg2, loss_fg1, loss_categorical
 
     def intensity_aware_loss(self, hm_gt, hm_prs, anno_gt, anno_prs, use_inter):
