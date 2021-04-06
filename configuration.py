@@ -15,7 +15,7 @@ class LearningConfig:
     Loss_threshold = 0.5
     Loss_threshold_2 = 0.02
 
-    virtual_batch_size = 500
+    virtual_batch_size = 250
 
     # batch_size = 3
     batch_size = 40
