@@ -51,7 +51,7 @@ class CustomLoss:
             _loss_bg_16, _loss_fg2_16, _loss_fg1_16, _loss_categorical_16 = self.hm_intensive_loss_1d(hm_gt=hm_gt_2d_16,
                                                                                                       hm_pr=hm_pr_16_2d)
             '''32'''
-            hm_gt_2d_32 = tf.image.resize(hm_gt_2d, size=(32, 23))
+            hm_gt_2d_32 = tf.image.resize(hm_gt_2d, size=(32, 32))
             _loss_bg_32, _loss_fg2_32, _loss_fg1_32, _loss_categorical_32 = self.hm_intensive_loss_1d(hm_gt=hm_gt_2d_32,
                                                                                                       hm_pr=hm_pr_32_2d)
             '''64'''
