@@ -80,7 +80,7 @@ class Train1DNet:
         model = cnn.get_model(arch=arch, num_landmark=self.num_landmark, weight_path=weight_path, old_arch=old_arch)
 
         '''LearningRate'''
-        _lr = 1e-2
+        _lr = 1e-3
         '''create optimizer'''
         optimizer = self._get_optimizer(lr=_lr)
 
