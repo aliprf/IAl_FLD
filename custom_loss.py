@@ -52,7 +52,6 @@ class CustomLoss:
             _loss_fg1 += 10 * _loss_fg1_2d
             _loss_categorical += 10 * _loss_categorical_2d
 
-
             '''8'''
             hm_gt_2d_8 = tf.image.resize(hm_gt_2d, size=(8, 8))
             _loss_bg_8, _loss_fg2_8, _loss_fg1_8, _loss_categorical_8 = self.hm_intensive_loss_1d(hm_gt=hm_gt_2d_8,
@@ -69,11 +68,11 @@ class CustomLoss:
             _loss_bg_64, _loss_fg2_64, _loss_fg1_64, _loss_categorical_64 = self.hm_intensive_loss_1d(hm_gt=hm_gt_2d,
                                                                                                       hm_pr=hm_pr_64_2d)
 
-            loss_bg = 5 * _loss_bg + _loss_bg_8 + _loss_bg_16 + _loss_bg_32 + _loss_bg_64
-            loss_fg2 = 5 * _loss_fg2 + _loss_fg2_8 + _loss_fg2_16 + _loss_fg2_32 + _loss_fg2_64
-            loss_fg1 = 5 * _loss_fg1 + _loss_fg1_8 + _loss_fg1_16 + _loss_fg1_32 + _loss_fg1_64
-            loss_categorical = 5 * _loss_categorical + _loss_categorical_8 + _loss_categorical_16 + _loss_categorical_32 \
-                               + _loss_categorical_64
+            loss_bg = _loss_bg + 0.01 * (_loss_bg_8 + _loss_bg_16 + _loss_bg_32 + _loss_bg_64)
+            loss_fg2 = _loss_fg2 + 0.01 * (_loss_fg2_8 + _loss_fg2_16 + _loss_fg2_32 + _loss_fg2_64)
+            loss_fg1 = _loss_fg1 + 0.01 * (_loss_fg1_8 + _loss_fg1_16 + _loss_fg1_32 + _loss_fg1_64)
+            loss_categorical = _loss_categorical + 0.01 * (_loss_categorical_8 + _loss_categorical_16 +
+                                                           _loss_categorical_32 + _loss_categorical_64)
         else:
             loss_bg, loss_fg2, loss_fg1, loss_categorical = self.hm_intensive_loss_1d(hm_gt=hm_gt,
                                                                                       hm_pr=hm_pr)
