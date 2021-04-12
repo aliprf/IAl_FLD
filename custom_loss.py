@@ -41,10 +41,12 @@ class CustomLoss:
             hm_pr_64_2d = hm_pr[4]
             hm_pr = hm_pr[0]
             '''main'''
-            hm_pr_2d = self.create_hm_pr_2d(hm_pr=hm_pr, hm_gt_2d=hm_gt_2d)
+            hm_pr_2d_vectorized = self.create_hm_pr_2d(hm=hm_pr, hm_gt_2d=hm_gt_2d)
+            hm_gt_2d_vectorized = self.create_hm_pr_2d(hm=hm_gt, hm_gt_2d=hm_gt_2d)
+
             _loss_bg, _loss_fg2, _loss_fg1, _loss_categorical = self.hm_intensive_loss_1d(hm_gt=hm_gt, hm_pr=hm_pr)
             _loss_bg_2d, _loss_fg2_2d, _loss_fg1_2d, _loss_categorical_2d =\
-                self.hm_intensive_loss_1d(hm_gt=hm_gt_2d, hm_pr=hm_pr_2d)
+                self.hm_intensive_loss_1d(hm_gt=hm_gt_2d_vectorized, hm_pr=hm_pr_2d_vectorized)
             _loss_bg += 10 * _loss_bg_2d
             _loss_fg2 += 10 * _loss_fg2_2d
             _loss_fg1 += 10 * _loss_fg1_2d
@@ -105,21 +107,21 @@ class CustomLoss:
         loss_total = loss_total_hm + loss_reg + regularization
         return loss_total, loss_total_hm, loss_reg, regularization, loss_bg, loss_fg2, loss_fg1, loss_categorical
 
-    def create_hm_pr_2d(self, hm_pr, hm_gt_2d):
+    def create_hm_pr_2d(self, hm, hm_gt_2d):
         """
         :param hm_gt_2d:
         :param hm_pr: bsize * 64 *2 * #lnd_points
         :return: hm_pr_2d: bsize * 64 * 64 * #lnd_points 
         """
-        hm_pr = np.array(hm_pr)
-        hm_pr_2d = np.zeros_like(hm_gt_2d) * 0.01  # 0.01 is noise
-        for bs_i in range(hm_pr.shape[0]):
-            for lnd_i in range(hm_pr.shape[3]):
-                x_indices = (-hm_pr[bs_i, :, 0, lnd_i]).argsort()[:1]
-                y_indices = (-hm_pr[bs_i, :, 1, lnd_i]).argsort()[:1]
-                hm_pr_2d[bs_i, x_indices, :, lnd_i] = hm_pr[bs_i, :, 1, lnd_i]
-                hm_pr_2d[bs_i, :, y_indices, lnd_i] = hm_pr[bs_i, :, 0, lnd_i]
-        return hm_pr_2d
+        hm = np.array(hm)
+        hm_2d = np.zeros_like(hm_gt_2d) * 0.01  # 0.01 is noise
+        for bs_i in range(hm.shape[0]):
+            for lnd_i in range(hm.shape[3]):
+                x_indices = (-hm[bs_i, :, 0, lnd_i]).argsort()[:1]
+                y_indices = (-hm[bs_i, :, 1, lnd_i]).argsort()[:1]
+                hm_2d[bs_i, x_indices, :, lnd_i] = hm[bs_i, :, 1, lnd_i]
+                hm_2d[bs_i, :, y_indices, lnd_i] = hm[bs_i, :, 0, lnd_i]
+        return hm_2d
 
     def calculate_regularization(self, hm_pr, anno_pr):
         """"""
