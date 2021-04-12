@@ -22,8 +22,8 @@ if __name__ == '__main__':
 
     '''train 1D models'''
     # trainer = Train1DNet(dataset_name=DatasetName.ds_cofw, use_augmented=True, multi_loss=True)
-    trainer = Train1DNet(dataset_name=DatasetName.ds_wflw, use_augmented=True, multi_loss=True)
-    # trainer = Train1DNet(dataset_name=DatasetName.ds_300W, use_augmented=True, multi_loss=True)
+    # trainer = Train1DNet(dataset_name=DatasetName.ds_wflw, use_augmented=True, multi_loss=True)
+    trainer = Train1DNet(dataset_name=DatasetName.ds_300W, use_augmented=True, multi_loss=True)
     trainer.train(arch='arch_1d_ml', weight_path='./models/last_1d.h5', old_arch=False)
     # trainer.train(arch='arch_1d_ml', weight_path=None, old_arch=True)
 
