@@ -90,7 +90,7 @@ class Train1DNet:
                                                                       hm_path=self.eval_annotation_path)
 
         #
-        # nme, fr = self._eval_model(model, img_val_filenames, pn_val_filenames)
+        nme, fr = self._eval_model(model, img_val_filenames, pn_val_filenames)
 
         '''create train configuration'''
         step_per_epoch = len(img_train_filenames) // LearningConfig.batch_size
