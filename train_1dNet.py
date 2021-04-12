@@ -1,3 +1,5 @@
+import random
+
 from configuration import DatasetName, DatasetType, D300WConf, InputDataSize, CofwConf, WflwConf, LearningConfig
 from custom_loss import CustomLoss
 from cnn_model import CNNModel
@@ -12,6 +14,7 @@ from numpy import save, load, asarray
 from skimage.io import imread
 from PIL import Image
 from tqdm import tqdm
+import random
 
 
 class Train1DNet:
@@ -87,14 +90,13 @@ class Train1DNet:
                                                                       hm_path=self.eval_annotation_path)
 
         #
-        nme, fr = self._eval_model(model, img_val_filenames, pn_val_filenames)
+        # nme, fr = self._eval_model(model, img_val_filenames, pn_val_filenames)
 
         '''create train configuration'''
         step_per_epoch = len(img_train_filenames) // LearningConfig.batch_size
 
         gradients = None
         virtual_step_per_epoch = LearningConfig.virtual_batch_size // LearningConfig.batch_size
-
         '''start train:'''
         for epoch in range(LearningConfig.epochs):
             img_train_filenames, hm_train_filenames = self._shuffle_data(img_train_filenames, hm_train_filenames)
@@ -140,11 +142,11 @@ class Train1DNet:
             '''save weights'''
             save_path = './models/'
             if self.dataset_name == DatasetName.ds_cofw:
-                save_path = '/media/data2/alip/HM_WEIGHTs/cofw/efn_1d/5_april/'
+                save_path = '/media/data2/alip/HM_WEIGHTs/cofw/efn_1d/11_april/'
             elif self.dataset_name == DatasetName.ds_wflw:
-                save_path = '/media/data2/alip/HM_WEIGHTs/wflw/efn_1d/5_april/'
+                save_path = '/media/data2/alip/HM_WEIGHTs/wflw/efn_1d/11_april/'
             elif self.dataset_name == DatasetName.ds_300W:
-                save_path = '/media/data3/ali/HM_WEIGHTs/300W/efn_1d/5_april/'
+                save_path = '/media/data3/ali/HM_WEIGHTs/300W/efn_1d/11_april/'
 
             model.save(save_path + 'IAL_mn_k-branch' + str(epoch) + '_' + self.dataset_name + '_nme_' + str(nme)
                        + '_fr_' + str(fr) + '.h5')
