@@ -235,7 +235,7 @@ class TrainAttentionNet:
             '''predict:'''
             hm_prs = model.predict_on_batch(images)  # hm_pr: 4, bs, 64, 64, 68
             if use_inter:
-                hm_prs_last_channel = np.array(hm_prs)[3, :, :, :]  # bs, 64, 64, 68
+                hm_prs_last_channel = np.array(hm_prs[-1])  # bs, 64, 64, 68
             else:
                 hm_prs_last_channel = np.array(hm_prs)
             '''calculate NME for batch'''
