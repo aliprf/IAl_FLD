@@ -42,20 +42,30 @@ from keras.layers import Dense, MaxPooling2D, Conv2D, Flatten, Conv2DTranspose, 
     GlobalMaxPool2D
 import efficientnet.tfkeras as efn
 
-from hrNet import HrNet
-import HourglassNet as hg
-from hg_blocks import create_hourglass_network, euclidean_loss, bottleneck_block, bottleneck_mobile
+from AttentionNet import AttNet
+
+# from hrNet import HrNet
+# # import HourglassNet as hg
+# from hg_blocks import create_hourglass_network, euclidean_loss, bottleneck_block, bottleneck_mobile
 
 
 class CNNModel:
-    def get_model(self, arch, num_landmark, weight_path,  old_arch, use_inter=True):
-        if arch == 'arch_1d_new':
+    def get_model(self, arch, num_landmark, weight_path=None,  old_arch=False, use_inter=True):
+        if arch == 'attNet':
+            attNet = AttNet(
+                input_shape=[InputDataSize.image_input_size, InputDataSize.image_input_size, 3],
+                num_landmark=num_landmark)
+            model = attNet.create_attention_net()
+            if weight_path is not None: model.load_weights(weight_path)
+            return model
+
+        elif arch == 'arch_1d_new':
             model = self.create_efficientNet_1d(
                 input_shape=[InputDataSize.image_input_size, InputDataSize.image_input_size, 3],
                 num_landmark=num_landmark)
             if weight_path is not None: model.load_weights(weight_path)
 
-        if arch == 'arch_1d_ml':
+        elif arch == 'arch_1d_ml':
             model_base = self.create_efficientNet_1d(
                 input_shape=[InputDataSize.image_input_size, InputDataSize.image_input_size, 3],
                 num_landmark=num_landmark)

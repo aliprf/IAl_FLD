@@ -80,7 +80,29 @@ class CustomLoss:
         loss_total = weight * (loss_bg + loss_fg2 + loss_fg1) + 0.1 * loss_categorical
         return loss_total, loss_bg, loss_fg2, loss_fg1, loss_categorical
 
-    def intensity_aware_loss(self, hm_gt, hm_prs, anno_gt, anno_prs, use_inter):
+    def intensity_aware_loss(self, hm_gt, hm_prs, att_gt, att_prs, use_inter):
+        weight = 3
+        if use_inter:
+            loss_bg, loss_fg2, loss_fg1, loss_categorical = self.hm_intensive_loss_stacked(hm_gt, hm_prs)
+
+        else:
+            loss_bg, loss_fg2, loss_fg1, loss_categorical = self.hm_intensive_loss_stacked_single(hm_gt, hm_prs)
+
+        loss_attention = self.attention_loss(att_gt, att_prs)
+
+        loss_total = weight * (loss_bg + loss_fg2 + loss_fg1) + loss_attention + 0.1 * loss_categorical
+
+        return loss_total, loss_bg, loss_fg2, loss_fg1, loss_categorical, loss_attention
+
+    def attention_loss(self, att_gt, att_prs):
+        loss_attention = 0
+        stack_weight = [1.0, 1.0, 1.0, 1.0, 3.0]  # two times more than sum of the previous layers
+        for i, att_pr in enumerate(att_prs):
+            loss_attention += stack_weight[i]*tf.math.reduce_mean(tf.math.abs(att_pr - att_gt))
+        return loss_attention
+
+
+    def _intensity_aware_loss(self, hm_gt, hm_prs, use_inter):
         weight = 20
         if use_inter:
             loss_bg, loss_fg2, loss_fg1, loss_categorical = self.hm_intensive_loss_stacked(hm_gt, hm_prs)
@@ -354,7 +376,8 @@ class CustomLoss:
 
         threshold = LearningConfig.Loss_threshold
         threshold_2 = LearningConfig.Loss_threshold_2
-        stack_weight = [1.0, 1.0, 1.0, 3.0]  # two times more than sum of the previous layers
+        # stack_weight = [1.0, 1.0, 1.0, 3.0]  # two times more than sum of the previous layers
+        stack_weight = [1.0, 1.0, 1.0, 1.0, 3.0]  # two times more than sum of the previous layers
         for i, hm_pr in enumerate(hm_prs):
             '''loss categorical'''
             pr_categorical_map_bg = tf.where(hm_pr < self.theta_0, CategoricalLabels.bg, 0)
@@ -392,11 +415,9 @@ class CustomLoss:
 
             '''loss fg2'''
             loss_fg2_low_dif = tf.math.reduce_mean(
-                # weight_map_fg2 * low_dif_map * tf.math.abs(hm_gt - hm_pr))
                 cat_loss_map * weight_map_fg2 * low_dif_map * tf.math.abs(hm_gt - hm_pr))
 
             loss_fg2_high_dif = tf.math.reduce_mean(
-                # weight_map_fg2 * high_dif_map * (tf.math.square(hm_gt - hm_pr) + threshold ** 2))
                 cat_loss_map * weight_map_fg2 * high_dif_map * (tf.math.square(hm_gt - hm_pr) + threshold ** 2))
 
             loss_fg2 += stack_weight[i] * (loss_fg2_low_dif + loss_fg2_high_dif)
